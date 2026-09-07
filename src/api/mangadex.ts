@@ -1,3 +1,4 @@
+import type { MangaDetailResponseDto, mangaDto, MangaListResponseDto } from "../features/manga/dto/mangaDto";
 import { normalizeManga } from "../features/manga/mapper/mangaMapper";
 import type { Manga, MangaDetail } from "../features/manga/types";
 
@@ -12,22 +13,22 @@ export async function fetchMangaList(): Promise<Manga[]> {
     throw new Error("failed to fetch manga list");
   }
 
-  const json = await res.json();
-  return json.data.map((item: any) => {
+  const json:MangaListResponseDto = await res.json();
+  return json.data.map((item: mangaDto) => {
     return normalizeManga(item);
   });
 }
 
 export async function fetchMangaDetails(id: string) {
   const res = await fetch(
-    `https://api.mangadex.org/manga/${id}?includes[]=cover_art`,
+    `https://api.mangadex.org/manga/${id}?includes[]=cover_art&includes[]=author&includes[]=artist`,
   );
 
   if (!res.ok) {
     throw new Error("failed to fetch manga details");
   }
 
-  const json = await res.json();
+  const json:MangaDetailResponseDto = await res.json();
 
   return normalizeManga(json.data);
 }

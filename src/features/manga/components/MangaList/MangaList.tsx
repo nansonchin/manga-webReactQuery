@@ -18,12 +18,18 @@ function MangaList({ mangas }: MangaListProps) {
         }}
       >
         {mangas.map((manga) => (
-          <Link style={{textDecoration:"none", color:"inherit"}} key={manga.id} to={`/manga/${manga.id}`}>
+          <Link
+            style={{ textDecoration: "none", color: "inherit" }}
+            key={manga.id}
+            to={`/manga/${manga.id}`}
+          >
             <MangaCard
               key={manga.id}
               title={manga.title}
               description={manga.description}
-              coverUrl={manga.coverUrl}
+              coverSmallUrl={manga.coverSmallUrl}
+              coverUrl={null}
+              coverLargeUrl={null}
             />
           </Link>
         ))}
