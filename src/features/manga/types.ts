@@ -14,3 +14,8 @@ export type MangaDetail = Manga &{
     tags:string[]
     year:number|null
 }
+
+export type MangaListResult ={
+    items:Manga[],
+    total:number
+}

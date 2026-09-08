@@ -2,10 +2,10 @@ import {mangaKeys} from '../queryKeys'
 import { fetchMangaDetails, fetchMangaList } from "../../../api/mangadex"
 
 export const mangaQueries ={
-    list(){
+    infiniteList(){
         return {
             queryKey:mangaKeys.list(),
-            queryFn:fetchMangaList,
+            queryFn:({pageParam}:{pageParam:number})=>fetchMangaList(pageParam),
         }
     },
     detail(id:string){

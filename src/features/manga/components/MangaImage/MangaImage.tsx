@@ -2,12 +2,16 @@ import { useState } from "react"
 
 type MangaImageProps={
     src:string|null
+    srcSet?:string
+    sizes?:string
     alt:string
     className?:string
 }
 
 function MangaImage({
     src,
+    srcSet,
+    sizes,
     alt,
     className
 }:MangaImageProps){
@@ -29,7 +33,7 @@ function MangaImage({
                     <div className="image-skeleton"/>
                 )
             }
-        <img src={src} alt={alt} 
+        <img src={src} alt={alt} srcSet={srcSet} sizes={sizes}
             loading="lazy" decoding="async" 
             className={`${className ?? ""} ${loaded? "loaded": ""}`}
             onLoad={()=>setLoaded(true)}
