@@ -25,6 +25,7 @@ function MangaList({ mangas }: MangaListProps) {
           >
             <MangaCard
               key={manga.id}
+              id={manga.id}
               title={manga.title}
               description={manga.description}
               coverSmallUrl={manga.coverSmallUrl}

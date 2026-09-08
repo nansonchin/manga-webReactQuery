@@ -1,10 +1,8 @@
 import {useQuery} from "@tanstack/react-query"
 import { fetchMangaList } from "../../../api/mangadex"
 import { mangaKeys } from "../queryKeys"
+import { mangaQueries } from "../queries/mangaQueries"
 
 export function useMangaList(){
-    return useQuery({
-        queryKey:mangaKeys.list(),
-        queryFn:fetchMangaList
-    })
+    return useQuery(mangaQueries.list())
 }

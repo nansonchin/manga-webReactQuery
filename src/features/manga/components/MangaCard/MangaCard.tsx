@@ -1,6 +1,9 @@
+import { usePrefetchManga } from "../../hooks/usePrefetchManga";
+import MangaImage from "../MangaImage/MangaImage";
 import "./MangaCard.scss";
 
 type MangaCardProps = {
+  id:string;
   title: string;
   description: string;
   coverUrl: string | null;
@@ -8,15 +11,16 @@ type MangaCardProps = {
   coverLargeUrl: string | null;
 };
 
-function MangaCard({ title, description, coverSmallUrl }: MangaCardProps) {
+function MangaCard({ id, title, description, coverSmallUrl }: MangaCardProps) {
+  
+  const prefetchManga=usePrefetchManga()
+
   return (
-    <article className="manga-card">
+    <article className="manga-card" onMouseEnter={()=>{
+      prefetchManga(id)
+    }}>
       <div className="manga-card_cover">
-        {coverSmallUrl ? (
-          <img src={coverSmallUrl} alt={title} loading="lazy" decoding="async"/>
-        ) : (
-          <span>No Cover Yet</span>
-        )}
+        <MangaImage src={coverSmallUrl} alt={title}/>
       </div>
 
       <div className="manga-card_body">

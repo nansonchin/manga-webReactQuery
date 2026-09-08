@@ -1,0 +1,23 @@
+.image-wrapper{
+    width: 100%;
+    aspect-ratio: 2/3;
+    overflow: hidden;
+    position: relative;
+}
+
+.image-wrapper img.loaded{
+    opacity: 1;
+}
+
+.image-skeleton{
+    position:absolute;
+    inset:0;
+    background:#ddd;
+}
+
+.image-fallback{
+    aspect-ratio: 2/3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
