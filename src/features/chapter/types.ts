@@ -7,3 +7,8 @@ export type Chapter ={
 
     pages:number
 }
+
+export type ChapterListResponse ={
+    items:Chapter[],
+    total:number;
+}

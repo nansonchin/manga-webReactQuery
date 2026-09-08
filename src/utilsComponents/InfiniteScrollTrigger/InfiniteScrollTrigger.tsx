@@ -2,12 +2,12 @@ import { useEffect, useRef } from "react";
 
 type InfiniteScrollTriggerProps={
     onLoadMore:()=>void;
-    disabled:boolean;
+    enabled:boolean;
 }
 
 function InfiniteScrollTrigger({
     onLoadMore,
-    disabled
+    enabled
 }:InfiniteScrollTriggerProps){
     const ref = useRef<HTMLDivElement|null>(null);
 
@@ -20,12 +20,13 @@ function InfiniteScrollTrigger({
 
         const observer= new IntersectionObserver((entries)=>{
             const entry = entries[0]
-            if(entry.isIntersecting && !disabled){
+            if(entry.isIntersecting && enabled){
                 onLoadMore();
             }
         },{
             // target threshold for the sentinel
-            threshold:1
+            // threshold:1
+            rootMargin:"200px"
         })
 
         observer.observe(element);
@@ -34,15 +35,10 @@ function InfiniteScrollTrigger({
             observer.disconnect()
         }
 
-    },[onLoadMore,disabled])
+    },[onLoadMore,enabled])
 
     return(
-        <div ref={ref}>
-
-            {
-                disabled && <div>Loading more manga ...</div>
-            }
-        </div>
+        <div ref={ref}/>
     )
 }
 

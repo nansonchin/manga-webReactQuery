@@ -6,7 +6,7 @@ export const chapterQueries ={
             "chapter",
             mangaId,
         ],
-        queryFn:()=>fetchChapterList(mangaId)
+        queryFn:({pageParam = 0})=>fetchChapterList(mangaId,pageParam)
     }),
     
 }

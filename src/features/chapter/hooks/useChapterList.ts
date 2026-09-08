@@ -4,7 +4,8 @@ import { chapterQueries } from "../queries/chapterQueries";
 export function useChapterList(
     mangaId:string
 ){
-    return useQuery(
-        chapterQueries.list(mangaId)
-    )
+    return null;
+    // return useQuery(
+    //     chapterQueries.list(mangaId)
+    // )
 }

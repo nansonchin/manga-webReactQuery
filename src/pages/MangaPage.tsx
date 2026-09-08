@@ -1,4 +1,4 @@
-import InfiniteScrollTrigger from "../features/manga/components/InfiniteScrollTrigger/InfiniteScrollTrigger";
+import InfiniteScrollTrigger from "../utilsComponents/InfiniteScrollTrigger/InfiniteScrollTrigger";
 import MangaCard from "../features/manga/components/MangaCard/MangaCard";
 import MangaList from "../features/manga/components/MangaList/MangaList";
 import { useMangaList } from "../features/manga/hooks/useMangaList";
@@ -19,19 +19,18 @@ function MangaPage() {
 
   return <div>
     <MangaList mangas={mangas}/>
-    <button
-      onClick={()=>fetchNextPage()}
-      disabled={!hasNextPage}
-    >
-      {
-        hasNextPage && (
-          <InfiniteScrollTrigger
-            onLoadMore={()=>fetchNextPage()}
-            disabled={isFetchingNextPage}/>
-        )
-      }
+    <InfiniteScrollTrigger
 
-    </button>
+        enabled={
+          !!hasNextPage &&
+          !isFetchingNextPage
+        }
+
+        onLoadMore={()=>{
+          fetchNextPage()
+        }}
+
+      />
   </div>;
 }
 
