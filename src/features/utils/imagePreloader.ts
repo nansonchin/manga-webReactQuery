@@ -15,6 +15,7 @@ export function preloadImage(src:string):Promise<void>{
         }
 
         image.onerror=()=>{
+            preloadCache.delete(src)
             reject(
                 new Error (`failed to preload image:${src}`)
             )
