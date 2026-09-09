@@ -1,0 +1,46 @@
+.reader-image{
+    position: relative;
+}
+
+.reader-image img{
+    display: block;
+    width: 100%;
+    opacity: 0;
+    transition: opacity .25s;
+}
+
+.reader-image img.loaded{
+    opacity: 1;
+}
+
+.reader-image-skeleton{
+    position: absolute;
+    inset: 0;
+    background: #ddd;
+}
+
+.reader-image-error{
+    padding: 32px;
+    text-align: center;
+}
+
+// .reader-image-wrapper{
+//     width: 100%;
+//     min-height: 800px;
+// }
+
+.reader-image-wrapper{
+    width:100%;
+    aspect-ratio: 1 / 1.4;
+}
+
+.reader-image-wrapper img{
+    width: 100%;
+    display: block;
+}
+
+.reader-placeholder{
+   height:800px;
+
+    background:red;
+}
