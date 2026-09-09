@@ -4,18 +4,17 @@ import ReaderImage from "../features/reader/components/ReaderImage/ReaderImage";
 import { useReaderPreload } from "../features/reader/hooks/useReaderPreload";
 import { useCurrentReaderPage } from "../features/reader/hooks/useCurrentReaderPage";
 
+const RENDER_AHEAD = 1;
+const PREFETCH_AHEAD = 3;
+
 function ReaderPage() {
   const { chapterId } = useParams();
 
   const { data, isPending, isError, error } = useChapterPages(chapterId!);
 
-  const{currentPage, observePage} = useCurrentReaderPage()
+  const { currentPage, observePage } = useCurrentReaderPage();
 
-  useReaderPreload(
-    data?? [],
-    currentPage
-  )
-
+  useReaderPreload(data ?? [], currentPage, PREFETCH_AHEAD);
 
   if (isPending) {
     return <div>Loading pages ...</div>;
@@ -38,21 +37,23 @@ function ReaderPage() {
       >
         Current Page : {currentPage}
       </div>
-      {data.map((page) => (
-        <div
-          key={page.index}
-          data-page={page.index + 1}
-          //callback ref for dynamic ref reading
-          ref={observePage}
-        >
-          
-          <ReaderImage
+      {data.map((page) => {
+        const shouldLoad = page.index <= currentPage + RENDER_AHEAD;
+        return (
+          <div
             key={page.index}
-            src={page.url}
-            alt={`Page ${page.index + 1}`}
-          />
-        </div>
-      ))}
+            data-page={page.index + 1}
+            //callback ref for dynamic ref reading
+            ref={observePage}
+          >
+            <ReaderImage
+              src={page.url}
+              alt={`Page ${page.index + 1}`}
+              shouldLoad={shouldLoad}              
+            />
+          </div>
+        );
+      })}
     </div>
   );
 }

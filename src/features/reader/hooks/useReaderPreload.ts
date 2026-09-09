@@ -8,9 +8,9 @@ export function useReaderPreload(
   preloadCount: number = 3,
 ) {
     // get the currentpage that the user is reading now to prefetch the next 3 pages and store into cache.
-  const loadedImages = useRef(new Set<string>());
+  // const loadedImages = useRef(new Set<string>());
   useEffect(() => {
-    if (!pages.length) {
+    if (!pages.length ||preloadCount<=0) {
       return;
     }
 
@@ -21,13 +21,13 @@ export function useReaderPreload(
     const nextPages = pages.slice(start, end);
 
     nextPages.forEach((page) => {
-      if (loadedImages.current.has(page.url)) {
-        return;
-      }
+      // if (loadedImages.current.has(page.url)) {
+      //   return;
+      // }
 
-      preloadImage(page.url);
+      void preloadImage(page.url);
 
-      loadedImages.current.add(page.url);
+      // loadedImages.current.add(page.url);
       console.log("preload", page.url);
       console.log(currentPage,nextPages.map(p=>p.index))
     });
