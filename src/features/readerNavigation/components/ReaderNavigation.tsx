@@ -14,8 +14,6 @@ type ReaderNavigationProps ={
     hasNext:boolean
     onPrevious:()=>void
     onNext:()=>void
-    isLoadingPrevious:boolean
-    isPreviousError:boolean
     navigationStatus:NavigationStatus
 }
 
@@ -26,8 +24,6 @@ function ReaderNavigation({
     hasNext,
     onPrevious,
     onNext,
-    isLoadingPrevious,
-    isPreviousError,
     navigationStatus
 }:ReaderNavigationProps){
     const isLoading = navigationStatus === "loading"

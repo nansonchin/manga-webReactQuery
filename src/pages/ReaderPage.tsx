@@ -42,13 +42,13 @@ function ReaderPage() {
     hasPrevious,
     goNextChapter,
     goPreviousChapter,
-    pendingNavigation,
     navigationStatus,
+    pendingNavigation,
   } = useChapterNavigation(
     chapters,
     mangaId,
     chapterId,
-    hasNextPage,
+    !!hasNextPage,
     loadMoreChapters,
     isFetchingNextPage,
     isFetchNextPageError
@@ -65,6 +65,14 @@ function ReaderPage() {
   if (isError) {
     return <div>Error: {error.message}</div>;
   }
+
+  console.log({
+    isChaptersPending,
+    isFetchingNextPage,
+    isFetchNextPageError,
+    pendingNavigation,
+    navigationStatus
+  })
 
   return (
     <div>
@@ -86,12 +94,7 @@ function ReaderPage() {
         hasNext={hasNext}
         onPrevious={goPreviousChapter}
         onNext={goNextChapter}
-        isLoadingPrevious={
-          isFetchingNextPage && pendingNavigation ==="previous"
-        }
-        // since now the api will always get the latest, which means next for now will always have the chapter instead of previous. 
-        // next page error will not be trigger for now
-        isPreviousError={isFetchNextPageError}
+        navigationStatus={navigationStatus}
       />
 
       {data.map((page) => {

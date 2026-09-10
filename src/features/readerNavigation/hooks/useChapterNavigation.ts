@@ -64,7 +64,7 @@ export function useChapterNavigation(
       await loadMoreChapters();
     } catch (error) {
       console.error("Failed to load previous chapter", error);
-      setPendingNavigation(null);
+      // setPendingNavigation(null);
     }
     // const newChapters = result.data?.pages.flatMap((page) => page.data ?? []);
 
@@ -115,12 +115,12 @@ export function useChapterNavigation(
 
   let navigationStatus :NavigationStatus ="idle";
 
-  if(pendingNavigation === "previous" && isLoadingMoreChapters){
-    navigationStatus="loading"
-  }
-
-  if(pendingNavigation ==="previous" && isFetchNextPageError){
-    navigationStatus="error"
+  if(pendingNavigation ==="previous"){
+    if(isLoadingMoreChapters){
+      navigationStatus="loading"
+    }else if (isFetchNextPageError){
+      navigationStatus="error"
+    }
   }
 
   return {
