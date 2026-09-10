@@ -10,11 +10,11 @@ const router = createBrowserRouter([
         element:<MangaPage/>
     },
     {
-        path:'/manga/:id',
+        path:'/manga/:mangaId',
         element:<MangaDetailPage/>
     },
     {
-        path:'/chapter/:chapterId',
+        path:'/manga/:mangaId/chapter/:chapterId',
         element:<ReaderPage/>
     }
 ])

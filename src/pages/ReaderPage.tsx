@@ -4,20 +4,33 @@ import ReaderImage from "../features/reader/components/ReaderImage/ReaderImage";
 import { useReaderPreload } from "../features/reader/hooks/useReaderPreload";
 import { useCurrentReaderPage } from "../features/reader/hooks/useCurrentReaderPage";
 import ReaderNavigation from "../features/readerNavigation/components/ReaderNavigation";
+import { useChapterNavigation } from "../features/readerNavigation/hooks/useChapterNavigation";
+import { useInfiniteChapterList } from "../features/chapter/hooks/useInfiniteChapterList";
 
 const RENDER_AHEAD = 1;
 const PREFETCH_AHEAD = 3;
 
 function ReaderPage() {
-  const { chapterId } = useParams();
+  const { mangaId, chapterId } = useParams();
+
+  if(!mangaId||!chapterId){
+    return <div>Invalid Reader Url</div>
+  }
 
   const { data, isPending, isError, error } = useChapterPages(chapterId!);
+
+  // to fetch next chapter & previous chapter
+  const {data:chapterData, isPending:isChaptersPending} = useInfiniteChapterList(mangaId!)
+
+  const chapters = chapterData?.pages.flatMap((page)=>page.items) ?? []
+
+  const {previousChapter, nextChapter, hasNext, hasPrevious, goNextChapter, goPreviousChapter} = useChapterNavigation(chapters,mangaId,chapterId)
 
   const { currentPage, observePage } = useCurrentReaderPage();
 
   useReaderPreload(data ?? [], currentPage, PREFETCH_AHEAD);
 
-  if (isPending) {
+  if (isPending || isChaptersPending) {
     return <div>Loading pages ...</div>;
   }
 
@@ -38,7 +51,12 @@ function ReaderPage() {
       >
         Current Page : {currentPage}
       </div>
-      <ReaderNavigation chapterId={chapterId!}/>
+      <ReaderNavigation 
+        previousChapter={previousChapter} 
+        nextChapter={nextChapter} 
+        hasPrevious={hasPrevious} 
+        hasNext={hasNext} onPrevious={goPreviousChapter} onNext={goNextChapter}/>
+        
       {data.map((page) => {
         const shouldLoad = page.index <= currentPage + RENDER_AHEAD;
         return (

@@ -1,15 +1,29 @@
+type Chapter={
+    id:string;
+}
+
 type ReaderNavigationProps ={
-    chapterId:string;
+    previousChapter:Chapter|null
+    nextChapter:Chapter|null
+    hasPrevious:boolean
+    hasNext:boolean
+    onPrevious:()=>void
+    onNext:()=>void
 }
 
 function ReaderNavigation({
-    chapterId,
+    previousChapter,
+    nextChapter,
+    hasPrevious,
+    hasNext,
+    onPrevious,
+    onNext
 }:ReaderNavigationProps){
     return(
         <div className="reader-navigation">
-            <button>Previous Chapter</button>
-            <span>{chapterId}</span>
-            <button>Next Chapter</button>
+            <button disabled={!hasPrevious} onClick={onPrevious}>Previous Chapter</button>
+            <span>Current Chapter</span>
+            <button disabled={!hasNext} onClick={onNext}>Next Chapter</button>
         </div>
     )
 }

@@ -7,16 +7,16 @@ import InfiniteScrollTrigger from "../utilsComponents/InfiniteScrollTrigger/Infi
 import { sortChapters } from "../features/utils/chapterSort";
 
 function MangaDetailPage() {
-  const { id } = useParams();
+  const { mangaId } = useParams();
 
-  const { data, isPending, isError, error } = useMangaDetail(id!);
+  const { data, isPending, isError, error } = useMangaDetail(mangaId!);
 
   const {
     data: chaptersData,
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-  } = useInfiniteChapterList(id!);
+  } = useInfiniteChapterList(mangaId!);
 
   const chapters = sortChapters(
     chaptersData?.pages.flatMap(page=>page.items)??[]
@@ -64,7 +64,7 @@ function MangaDetailPage() {
         </div>
       </div>
       <div>Chapters</div>
-      <ChapterList chapters={chapters ?? []} />
+      <ChapterList mangaId={mangaId} chapters={chapters ?? []} />
       <InfiniteScrollTrigger
         enabled={!!hasNextPage && !isFetchingNextPage}
         onLoadMore={fetchNextPage}

@@ -4,10 +4,12 @@ import { usePrefetchChapterPages } from "../../../reader/hooks/usePrefetchChapte
 import { useHoverPrefetch } from "../../../reader/hooks/useHoverPrefetch";
 
 type ChapterItemProps={
+    mangaId:string
     chapter:Chapter;
 }
 
 function ChapterItem({
+    mangaId,
     chapter
 }:ChapterItemProps){
     const prefetchChapterPages = usePrefetchChapterPages()
@@ -17,7 +19,7 @@ function ChapterItem({
     })
     return(
         <Link
-            to={`/chapter/${chapter.id}`}
+            to={`/manga/${mangaId}/chapter/${chapter.id}`}
             className="chapter-link"
             {...hoverProps}
         >
