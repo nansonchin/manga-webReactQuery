@@ -98,7 +98,7 @@ export function useChapterNavigation(
     nextChapter,
     goPreviousChapter,
     goNextChapter,
-    hasPrevious: !!previousChapter,
+    hasPrevious: !!previousChapter|| hasMoreChapters,
     hasNext: !!nextChapter,
     pendingNavigation,
   };
