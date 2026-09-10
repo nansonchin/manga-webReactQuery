@@ -3,6 +3,7 @@ import { useChapterPages } from "../features/reader/hooks/useChapterPages";
 import ReaderImage from "../features/reader/components/ReaderImage/ReaderImage";
 import { useReaderPreload } from "../features/reader/hooks/useReaderPreload";
 import { useCurrentReaderPage } from "../features/reader/hooks/useCurrentReaderPage";
+import ReaderNavigation from "../features/readerNavigation/components/ReaderNavigation";
 
 const RENDER_AHEAD = 1;
 const PREFETCH_AHEAD = 3;
@@ -37,6 +38,7 @@ function ReaderPage() {
       >
         Current Page : {currentPage}
       </div>
+      <ReaderNavigation chapterId={chapterId!}/>
       {data.map((page) => {
         const shouldLoad = page.index <= currentPage + RENDER_AHEAD;
         return (
