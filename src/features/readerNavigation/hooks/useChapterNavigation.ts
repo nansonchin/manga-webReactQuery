@@ -6,7 +6,13 @@ import { useEffect, useState } from "react";
 
 type Chapter = ChapterListResponse["items"][number];
 
+// to catch the status when the infinitequeries not yet fetch the next 20 chapter for the next and previous chapter
 type PendingNavigation = "previous" | "next" | null;
+
+type NavigationStatus = 
+  | "idle"
+  | "loading"
+  | "error"
 
 export function useChapterNavigation(
   chapters: Chapter[],
@@ -15,6 +21,7 @@ export function useChapterNavigation(
   hasMoreChapters: boolean,
   loadMoreChapters: () => Promise<void>,
   isLoadingMoreChapters: boolean,
+  isFetchNextPageError:boolean,
 ) {
   const navigate = useNavigate();
 
@@ -38,30 +45,32 @@ export function useChapterNavigation(
   };
 
   const goPreviousChapter = async () => {
-    if(previousChapter){
+    if (previousChapter) {
       navigateToChapter(previousChapter);
-      return
-    }
-
-    if(isLoadingMoreChapters){
       return;
     }
 
-    if(!hasMoreChapters){
-      return
+    if (isLoadingMoreChapters) {
+      return;
+    }
+
+    if (!hasMoreChapters) {
+      return;
     }
 
     setPendingNavigation("previous");
 
-    await loadMoreChapters();
-
+    try {
+      await loadMoreChapters();
+    } catch (error) {
+      console.error("Failed to load previous chapter", error);
+      setPendingNavigation(null);
+    }
     // const newChapters = result.data?.pages.flatMap((page) => page.data ?? []);
 
     // const newCurrentIndex = newChapters?.findIndex(
     //   (chapter) => chapter.id === currentChapterId,
     // );
-
-  
   };
 
   const goNextChapter = () => {
@@ -69,16 +78,26 @@ export function useChapterNavigation(
       return;
     }
 
-    navigateToChapter(nextChapter)
+    navigateToChapter(nextChapter);
   };
 
   useEffect(() => {
     if (!pendingNavigation) {
       return;
     }
+
+    if(pendingNavigation!=="previous"){
+      return;
+    }
+
     if (isLoadingMoreChapters) {
       return;
     }
+
+    if(isFetchNextPageError){
+      return;
+    }
+
     if (pendingNavigation === "previous" && previousChapter) {
       setPendingNavigation(null);
       navigateToChapter(previousChapter);
@@ -93,13 +112,25 @@ export function useChapterNavigation(
     isLoadingMoreChapters,
     hasMoreChapters,
   ]);
+
+  let navigationStatus :NavigationStatus ="idle";
+
+  if(pendingNavigation === "previous" && isLoadingMoreChapters){
+    navigationStatus="loading"
+  }
+
+  if(pendingNavigation ==="previous" && isFetchNextPageError){
+    navigationStatus="error"
+  }
+
   return {
     previousChapter,
     nextChapter,
     goPreviousChapter,
     goNextChapter,
-    hasPrevious: !!previousChapter|| hasMoreChapters,
+    hasPrevious: !!previousChapter || hasMoreChapters,
     hasNext: !!nextChapter,
     pendingNavigation,
+    navigationStatus
   };
 }
