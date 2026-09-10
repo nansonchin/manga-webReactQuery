@@ -9,6 +9,7 @@ type ReaderNavigationProps ={
     hasNext:boolean
     onPrevious:()=>void
     onNext:()=>void
+    isLoadingPrevious:boolean
 }
 
 function ReaderNavigation({
@@ -17,11 +18,12 @@ function ReaderNavigation({
     hasPrevious,
     hasNext,
     onPrevious,
-    onNext
+    onNext,
+    isLoadingPrevious,
 }:ReaderNavigationProps){
     return(
         <div className="reader-navigation">
-            <button disabled={!hasPrevious} onClick={onPrevious}>Previous Chapter</button>
+            <button disabled={!hasPrevious || isLoadingPrevious} onClick={onPrevious}>Previous Chapter</button>
             <span>Current Chapter</span>
             <button disabled={!hasNext} onClick={onNext}>Next Chapter</button>
         </div>

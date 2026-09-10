@@ -13,18 +13,43 @@ const PREFETCH_AHEAD = 3;
 function ReaderPage() {
   const { mangaId, chapterId } = useParams();
 
-  if(!mangaId||!chapterId){
-    return <div>Invalid Reader Url</div>
+  if (!mangaId || !chapterId) {
+    return <div>Invalid Reader Url</div>;
   }
 
   const { data, isPending, isError, error } = useChapterPages(chapterId!);
 
   // to fetch next chapter & previous chapter
-  const {data:chapterData, isPending:isChaptersPending} = useInfiniteChapterList(mangaId!)
+  const {
+    data: chapterData,
+    isPending: isChaptersPending,
+    hasNextPage,
+    fetchNextPage,
+    isFetchingNextPage,
+  } = useInfiniteChapterList(mangaId!);
 
-  const chapters = chapterData?.pages.flatMap((page)=>page.items) ?? []
+  const chapters = chapterData?.pages.flatMap((page) => page.items) ?? [];
 
-  const {previousChapter, nextChapter, hasNext, hasPrevious, goNextChapter, goPreviousChapter} = useChapterNavigation(chapters,mangaId,chapterId)
+  const loadMoreChapters = async() =>{
+    await fetchNextPage()
+  }
+
+  const {
+    previousChapter,
+    nextChapter,
+    hasNext,
+    hasPrevious,
+    goNextChapter,
+    goPreviousChapter,
+    pendingNavigation,
+  } = useChapterNavigation(
+    chapters,
+    mangaId,
+    chapterId,
+    hasNextPage,
+    loadMoreChapters,
+    isFetchingNextPage
+  );
 
   const { currentPage, observePage } = useCurrentReaderPage();
 
@@ -51,12 +76,18 @@ function ReaderPage() {
       >
         Current Page : {currentPage}
       </div>
-      <ReaderNavigation 
-        previousChapter={previousChapter} 
-        nextChapter={nextChapter} 
-        hasPrevious={hasPrevious} 
-        hasNext={hasNext} onPrevious={goPreviousChapter} onNext={goNextChapter}/>
-        
+      <ReaderNavigation
+        previousChapter={previousChapter}
+        nextChapter={nextChapter}
+        hasPrevious={hasPrevious}
+        hasNext={hasNext}
+        onPrevious={goPreviousChapter}
+        onNext={goNextChapter}
+        isLoadingPrevious={
+          isFetchingNextPage && pendingNavigation ==="previous"
+        }
+      />
+
       {data.map((page) => {
         const shouldLoad = page.index <= currentPage + RENDER_AHEAD;
         return (
@@ -69,7 +100,7 @@ function ReaderPage() {
             <ReaderImage
               src={page.url}
               alt={`Page ${page.index + 1}`}
-              shouldLoad={shouldLoad}              
+              shouldLoad={shouldLoad}
             />
           </div>
         );
