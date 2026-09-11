@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { use, useCallback, useEffect, useRef, useState } from "react";
 
 export function useCurrentReaderPage() {
     // to store the current page that showing out to the user device.
@@ -62,8 +62,38 @@ export function useCurrentReaderPage() {
     }
   }, []);
 
+  const scrollToPage = useCallback((page:number)=>{
+    const element = document.querySelector(
+      `[data-page="${page+1}"]`
+    )
+
+    if(!element){
+      return
+    }
+
+    element.scrollIntoView({
+      behavior:"smooth",
+      block:"start"
+    })
+  },[])
+
+  const scrollToNextPage = useCallback(()=>{
+    scrollToPage(currentPage+1)
+  },[currentPage,scrollToPage])
+
+  const scrollToPreviousPage = useCallback(()=>{
+    if(currentPage<=0){
+      return 0
+    };
+
+    scrollToPage(currentPage-1)
+  },[currentPage,scrollToPage])
+
   return {
     currentPage,
     observePage,
+    scrollToNextPage,
+    scrollToPreviousPage,
+    scrollToPage,
   };
 }
