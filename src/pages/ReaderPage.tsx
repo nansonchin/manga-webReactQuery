@@ -6,6 +6,7 @@ import { useCurrentReaderPage } from "../features/reader/hooks/useCurrentReaderP
 import ReaderNavigation from "../features/readerNavigation/components/ReaderNavigation";
 import { useChapterNavigation } from "../features/readerNavigation/hooks/useChapterNavigation";
 import { useInfiniteChapterList } from "../features/chapter/hooks/useInfiniteChapterList";
+import { useKeyboardNavigation } from "../features/keyboard/hooks/useKeyboardNavigation";
 
 const RENDER_AHEAD = 1;
 const PREFETCH_AHEAD = 3;
@@ -57,6 +58,13 @@ function ReaderPage() {
   const { currentPage, observePage } = useCurrentReaderPage();
 
   useReaderPreload(data ?? [], currentPage, PREFETCH_AHEAD);
+
+  useKeyboardNavigation({
+    onNextPage,
+    onPreviousPage,
+    onNextChapter:goNextChapter,
+    onPreviousChapter:goPreviousChapter
+  })
 
   if (isPending || isChaptersPending) {
     return <div>Loading pages ...</div>;
