@@ -109,3 +109,189 @@ code {
   padding: 4px 8px;
   background: var(--code-bg);
 }
+
+/* ========================================
+   Reader
+   ======================================== */
+
+.reader {
+  min-height: 100vh;
+  width: 100%;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.reader-light {
+  background: #ffffff;
+  color: #111111;
+}
+
+.reader-dark {
+  background: #111111;
+  color: #eeeeee;
+}
+
+/* ========================================
+   Reader Current Page
+   ======================================== */
+
+.reader-current-page {
+  position: fixed;
+  top: 10px;
+  left: 10px;
+
+  z-index: 1000;
+
+  padding: 6px 10px;
+
+  border-radius: 6px;
+
+  font-size: 14px;
+
+  background: rgba(255, 255, 255, 0.9);
+  color: #111111;
+
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* ========================================
+   Reader Settings
+   ======================================== */
+
+.reader-settings {
+  position: fixed;
+
+  top: 10px;
+  right: 10px;
+
+  z-index: 1000;
+
+  width: 220px;
+
+  padding: 16px;
+
+  border-radius: 10px;
+
+  background: rgba(255, 255, 255, 0.96);
+  color: #111111;
+
+  box-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.18);
+
+  text-align: left;
+}
+
+.reader-settings-section {
+  margin-bottom: 16px;
+}
+
+.reader-settings-section:last-child {
+  margin-bottom: 0;
+}
+
+.reader-settings-section h3 {
+  margin: 0 0 8px;
+
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.reader-settings-options {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.reader-settings button {
+  border: 1px solid #d1d5db;
+
+  border-radius: 6px;
+
+  padding: 7px 10px;
+
+  background: #ffffff;
+  color: #111111;
+
+  cursor: pointer;
+
+  font-size: 13px;
+}
+
+.reader-settings button:hover {
+  background: #f3f4f6;
+}
+
+.reader-settings button.active {
+  border-color: #2563eb;
+
+  background: #2563eb;
+  color: #ffffff;
+}
+
+.reader-settings-reset {
+  width: 100%;
+}
+
+/* ========================================
+   Long Strip
+   ======================================== */
+
+.reader-long-strip {
+  width: 100%;
+}
+
+/* ========================================
+   Single Page
+   ======================================== */
+
+.reader-single-page {
+  width: 100%;
+
+  min-height: 100vh;
+
+  display: flex;
+  flex-direction: column;
+
+  align-items: center;
+  justify-content: center;
+}
+
+.reader-single-page-item {
+  width: 100%;
+
+  display: flex;
+
+  justify-content: center;
+
+  visibility: hidden;
+
+  height: 0;
+
+  overflow: hidden;
+}
+
+.reader-single-page-item.active {
+  visibility: visible;
+
+  height: auto;
+
+  overflow: visible;
+}
+
+/* ========================================
+   Dark Reader Image Area
+   ======================================== */
+
+.reader-dark .reader-image {
+  background: #111111;
+}
+
+.reader-dark .reader-placeholder {
+  background: #111111;
+}
+
+.reader-dark .reader-image-wrapper {
+  background: #111111;
+}
