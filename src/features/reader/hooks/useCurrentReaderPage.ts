@@ -9,6 +9,8 @@ export function useCurrentReaderPage() {
 
   const observerRef = useRef<IntersectionObserver | null>(null);
 
+  const pageElements = useRef(new Set<HTMLElement>())
+
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
@@ -51,14 +53,24 @@ export function useCurrentReaderPage() {
 
     observerRef.current = observer;
 
+    pageElements.current.forEach((element)=>{
+      observer.observe(element)
+    })
+
     return () => {
       observer.disconnect();
+      observerRef.current=null;
+      visiblePages.current.clear()
     };
   }, []);
 
   const observePage = useCallback((element: HTMLElement | null) => {
+    if(!element){
+      return
+    }
     if (element) {
       observerRef.current?.observe(element);
+      pageElements.current.add(element)
     }
   }, []);
 
@@ -88,6 +100,7 @@ export function useCurrentReaderPage() {
 
     scrollToPage(currentPage-1)
   },[currentPage,scrollToPage])
+
 
   return {
     currentPage,

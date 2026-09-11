@@ -6,7 +6,8 @@ import { useCurrentReaderPage } from "../features/reader/hooks/useCurrentReaderP
 import ReaderNavigation from "../features/readerNavigation/components/ReaderNavigation";
 import { useChapterNavigation } from "../features/readerNavigation/hooks/useChapterNavigation";
 import { useInfiniteChapterList } from "../features/chapter/hooks/useInfiniteChapterList";
-import { useKeyboardNavigation } from "../features/keyboard/hooks/useKeyboardNavigation";
+import { useKeyboardNavigation } from "../features/reader/hooks/useKeyboardNavigation";
+import { useReaderControls } from "../features/reader/hooks/useReaderControl";
 
 const RENDER_AHEAD = 1;
 const PREFETCH_AHEAD = 3;
@@ -18,6 +19,20 @@ function ReaderPage() {
     return <div>Invalid Reader Url</div>;
   }
 
+  return(
+    <ReaderPageContent
+      mangaId={mangaId}
+      chapterId={chapterId}
+    />
+  )
+}
+
+type ReaderPageContentProps = {
+  mangaId: string;
+  chapterId: string;
+};
+
+function ReaderPageContent({ mangaId, chapterId }: ReaderPageContentProps) {
   const { data, isPending, isError, error } = useChapterPages(chapterId!);
 
   // to fetch next chapter & previous chapter
@@ -32,9 +47,9 @@ function ReaderPage() {
 
   const chapters = chapterData?.pages.flatMap((page) => page.items) ?? [];
 
-  const loadMoreChapters = async() =>{
-    await fetchNextPage()
-  }
+  const loadMoreChapters = async () => {
+    await fetchNextPage();
+  };
 
   const {
     previousChapter,
@@ -52,19 +67,26 @@ function ReaderPage() {
     !!hasNextPage,
     loadMoreChapters,
     isFetchingNextPage,
-    isFetchNextPageError
+    isFetchNextPageError,
   );
 
-  const { currentPage, observePage } = useCurrentReaderPage();
+  const { currentPage, observePage, scrollToNextPage, scrollToPreviousPage } =
+    useCurrentReaderPage();
 
   useReaderPreload(data ?? [], currentPage, PREFETCH_AHEAD);
 
+  const controls = useReaderControls({
+    currentPage,
+    totalPages: data?.length ?? 0,
+    scrollToNextPage,
+    scrollToPreviousPage,
+    nextChapter: goNextChapter,
+    previousChapter: goPreviousChapter,
+  });
+
   useKeyboardNavigation({
-    onNextPage,
-    onPreviousPage,
-    onNextChapter:goNextChapter,
-    onPreviousChapter:goPreviousChapter
-  })
+    controls,
+  });
 
   if (isPending || isChaptersPending) {
     return <div>Loading pages ...</div>;
@@ -79,8 +101,8 @@ function ReaderPage() {
     isFetchingNextPage,
     isFetchNextPageError,
     pendingNavigation,
-    navigationStatus
-  })
+    navigationStatus,
+  });
 
   return (
     <div>
