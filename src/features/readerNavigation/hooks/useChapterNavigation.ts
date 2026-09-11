@@ -111,6 +111,7 @@ export function useChapterNavigation(
     previousChapter,
     isLoadingMoreChapters,
     hasMoreChapters,
+    isFetchNextPageError
   ]);
 
   let navigationStatus :NavigationStatus ="idle";

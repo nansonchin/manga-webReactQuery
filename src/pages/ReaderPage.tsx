@@ -8,6 +8,10 @@ import { useChapterNavigation } from "../features/readerNavigation/hooks/useChap
 import { useInfiniteChapterList } from "../features/chapter/hooks/useInfiniteChapterList";
 import { useKeyboardNavigation } from "../features/reader/hooks/useKeyboardNavigation";
 import { useReaderControls } from "../features/reader/hooks/useReaderControl";
+import { ReaderSettingsProvider, useReaderSettings } from "../features/readerSetting/context/ReaderSettingContext";
+import ReaderSettingsPanel from "../features/readerSetting/components/ReaderSettingsPanel";
+import LongStripReader from "../features/reader/components/LongStripReader/LongStripReader";
+import SinglePageReader from "../features/reader/components/SinglePageReader/SinglePageReader";
 
 const RENDER_AHEAD = 1;
 const PREFETCH_AHEAD = 3;
@@ -19,12 +23,11 @@ function ReaderPage() {
     return <div>Invalid Reader Url</div>;
   }
 
-  return(
-    <ReaderPageContent
-      mangaId={mangaId}
-      chapterId={chapterId}
-    />
-  )
+  return (
+    <ReaderSettingsProvider>
+      <ReaderPageContent mangaId={mangaId} chapterId={chapterId} />
+    </ReaderSettingsProvider>
+  );
 }
 
 type ReaderPageContentProps = {
@@ -33,6 +36,8 @@ type ReaderPageContentProps = {
 };
 
 function ReaderPageContent({ mangaId, chapterId }: ReaderPageContentProps) {
+  const { settings} = useReaderSettings()
+  
   const { data, isPending, isError, error } = useChapterPages(chapterId!);
 
   // to fetch next chapter & previous chapter
@@ -96,6 +101,10 @@ function ReaderPageContent({ mangaId, chapterId }: ReaderPageContentProps) {
     return <div>Error: {error.message}</div>;
   }
 
+  const pages= data ??[]
+
+  const readerClassName = settings.theme === "dark"? "reader reader-dark": "reader reader-light"
+
   console.log({
     isChaptersPending,
     isFetchingNextPage,
@@ -105,7 +114,8 @@ function ReaderPageContent({ mangaId, chapterId }: ReaderPageContentProps) {
   });
 
   return (
-    <div>
+    <div className={readerClassName}>
+      <ReaderSettingsPanel/>
       <div
         style={{
           position: "fixed",
@@ -127,23 +137,22 @@ function ReaderPageContent({ mangaId, chapterId }: ReaderPageContentProps) {
         navigationStatus={navigationStatus}
       />
 
-      {data.map((page) => {
-        const shouldLoad = page.index <= currentPage + RENDER_AHEAD;
-        return (
-          <div
-            key={page.index}
-            data-page={page.index + 1}
-            //callback ref for dynamic ref reading
-            ref={observePage}
-          >
-            <ReaderImage
-              src={page.url}
-              alt={`Page ${page.index + 1}`}
-              shouldLoad={shouldLoad}
-            />
-          </div>
-        );
-      })}
+     {
+      settings.pageMode === "long-strip" ? (
+        <LongStripReader
+          pages={pages}
+          currentPage={currentPage}
+          renderAhead={RENDER_AHEAD}
+          observePage={observePage}
+        />
+      ):(
+        <SinglePageReader
+          pages={pages}
+          currentPage={currentPage}
+          observePage={observePage}
+        />
+      )
+     }
     </div>
   );
 }
