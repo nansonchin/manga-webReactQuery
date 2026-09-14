@@ -75,7 +75,7 @@ function ReaderPageContent({ mangaId, chapterId }: ReaderPageContentProps) {
     isFetchNextPageError,
   );
 
-  const { currentPage, observePage, scrollToNextPage, scrollToPreviousPage } =
+  const { currentPage, observePage, scrollToNextPage, scrollToPreviousPage,goToNextPage,goToPreviousPage } =
     useCurrentReaderPage();
 
   useReaderPreload(data ?? [], currentPage, PREFETCH_AHEAD);
@@ -87,6 +87,8 @@ function ReaderPageContent({ mangaId, chapterId }: ReaderPageContentProps) {
     scrollToPreviousPage,
     nextChapter: goNextChapter,
     previousChapter: goPreviousChapter,
+    clickNextPage:goToNextPage,
+    clickPreviousPage:goToPreviousPage
   });
 
   useKeyboardNavigation({
@@ -150,6 +152,8 @@ function ReaderPageContent({ mangaId, chapterId }: ReaderPageContentProps) {
           pages={pages}
           currentPage={currentPage}
           observePage={observePage}
+          onNextPage={controls.clickPage.clickNext}
+          onPreviousPage={controls.clickPage.clickPrevious}
         />
       )
      }

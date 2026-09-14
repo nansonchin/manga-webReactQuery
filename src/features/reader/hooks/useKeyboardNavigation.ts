@@ -3,7 +3,7 @@ import { useEffect } from "react";
 type ReaderControls = {
   next: () => void;
   previous: () => void;
-  page: {
+  scrollPage: {
     next: () => void;
     previous: () => void;
   };
@@ -11,6 +11,7 @@ type ReaderControls = {
     nextChapter: () => void;
     previousChapter: () => void;
   };
+  
 };
 
 type UseKeyboardNavigationProps = {

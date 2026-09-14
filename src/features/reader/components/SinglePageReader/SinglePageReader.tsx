@@ -1,4 +1,6 @@
+import { useReaderTapNavigation } from "../../hooks/useReaderTapNavigation";
 import ReaderImage from "../ReaderImage/ReaderImage";
+import "./SinglePageReader.scss"
 
 type ReaderPageData={
     index:number,
@@ -10,16 +12,25 @@ type SinglePageReaderProps ={
     currentPage:number;
     observePage:(
         element:HTMLElement|null,
-    )=>void
+    )=>void;
+    onNextPage:()=>void;
+    onPreviousPage:()=>void;
 };
 
 function SinglePageReader({
     pages,
     currentPage,
     observePage,
+    onNextPage,
+    onPreviousPage
 }:SinglePageReaderProps){
+    const {handleTap} = useReaderTapNavigation({
+        previous:onPreviousPage,
+        next:onNextPage
+    })
+
     return(
-        <div className="readeer-single-page">
+        <div className="reader-single-page" onClick={handleTap}>
             {
                 pages.map((page)=>{
                     const isCurrent= page.index === currentPage;

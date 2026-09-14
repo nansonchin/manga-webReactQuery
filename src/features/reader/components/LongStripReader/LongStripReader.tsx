@@ -23,7 +23,7 @@ function LongStripReader({
       {pages.map((page) => {
         const shouldLoad = page.index <= currentPage + renderAhead;
         return (
-          <div>
+          <div key={page.index} data-page={page.index+1} ref={observePage}>
             <ReaderImage
               src={page.url}
               alt={`Page ${page.index + 1}`}

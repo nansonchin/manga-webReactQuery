@@ -8,6 +8,9 @@ type UseReaderControlsProps = {
 
   nextChapter: () => void;
   previousChapter: () => void;
+
+  clickNextPage:()=>void;
+  clickPreviousPage:()=>void;
 };
 
 export function useReaderControls({
@@ -17,12 +20,25 @@ export function useReaderControls({
   scrollToPreviousPage,
   nextChapter,
   previousChapter,
+
+  clickNextPage,
+  clickPreviousPage
+
 }: UseReaderControlsProps) {
-  const nextPage = useCallback(() => {
+
+  const goNextPage = useCallback(()=>{
+    clickNextPage()
+  },[])
+
+  const goPreviousPage=useCallback(()=>{
+    clickPreviousPage()
+  },[])
+
+  const scrollNextPage = useCallback(() => {
     scrollToNextPage();
   }, [scrollToNextPage]);
 
-  const previousPage = useCallback(() => {
+  const scrollPreviousPage = useCallback(() => {
     scrollToPreviousPage();
   }, [scrollToPreviousPage]);
 
@@ -42,8 +58,8 @@ export function useReaderControls({
       return;
     }
 
-    nextPage();
-  }, [currentPage, totalPages, nextPage, nextChapter]);
+    scrollNextPage();
+  }, [currentPage, totalPages, scrollNextPage, nextChapter]);
 
   const previous = useCallback(() => {
     const isFirstPage = currentPage <= 0;
@@ -53,16 +69,23 @@ export function useReaderControls({
       return;
     }
 
-    previousPage();
-  }, [currentPage, previousPage, previousChapter]);
+    scrollPreviousPage();
+  }, [currentPage, scrollPreviousPage, previousChapter]);
 
-  const page = useMemo(
+  const scrollPage = useMemo(
     () => ({
-      next: nextPage,
-      previous: previousPage,
+      next: scrollNextPage,
+      previous: scrollPreviousPage,
     }),
-    [nextPage, previousPage],
+    [scrollNextPage, scrollPreviousPage],
   );
+
+  const clickPage = useMemo(
+    ()=>({
+      clickNext:goNextPage,
+      clickPrevious:goPreviousPage
+    }),[goNextPage,goPreviousPage]
+  )
 
   const chapter = useMemo(
     () => ({
@@ -76,9 +99,10 @@ export function useReaderControls({
     () => ({
       next,
       previous,
-      page,
+      scrollPage,
+      clickPage,
       chapter,
     }),
-    [next, previous, page, chapter],
+    [next, previous, scrollPage,clickPage, chapter],
   );
 }

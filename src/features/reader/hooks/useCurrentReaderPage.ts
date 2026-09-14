@@ -1,4 +1,4 @@
-import { use, useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 export function useCurrentReaderPage() {
     // to store the current page that showing out to the user device.
@@ -74,6 +74,8 @@ export function useCurrentReaderPage() {
     }
   }, []);
 
+
+  //long - strip page
   const scrollToPage = useCallback((page:number)=>{
     const element = document.querySelector(
       `[data-page="${page+1}"]`
@@ -101,12 +103,27 @@ export function useCurrentReaderPage() {
     scrollToPage(currentPage-1)
   },[currentPage,scrollToPage])
 
+  // single page
+
+  const goToNextPage = useCallback(()=>{
+    setCurrentPage((page)=>page+1)
+  },[])
+
+  const goToPreviousPage = useCallback(()=>{
+    setCurrentPage((page)=>Math.max(0,page-1))
+  },[])
+
 
   return {
     currentPage,
     observePage,
+    // long strip page
     scrollToNextPage,
     scrollToPreviousPage,
     scrollToPage,
+
+    // clicke /tap single page
+    goToNextPage,
+    goToPreviousPage
   };
 }
