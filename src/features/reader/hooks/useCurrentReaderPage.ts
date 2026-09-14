@@ -14,7 +14,7 @@ export function useCurrentReaderPage() {
   // page that the long strip page need to jump to when the dom is not ready for the page rendering
   const [targetPage,setTargetPage] = useState<number|null>(null);
 
-
+// observe and update the current page
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
@@ -68,6 +68,7 @@ export function useCurrentReaderPage() {
     };
   }, []);
 
+  // register page Dom element to IntersectionnObserver
   const observePage = useCallback((element: HTMLElement | null) => {
     if(!element){
       return
@@ -80,20 +81,20 @@ export function useCurrentReaderPage() {
 
 
   //long - strip page
-  const scrollToPage = useCallback((page:number)=>{
-    const element = document.querySelector(
-      `[data-page="${page+1}"]`
-    )
+  // const scrollToPage = useCallback((page:number)=>{
+  //   const element = document.querySelector(
+  //     `[data-page="${page+1}"]`
+  //   )
 
-    if(!element){
-      return
-    }
+  //   if(!element){
+  //     return
+  //   }
 
-    element.scrollIntoView({
-      behavior:"smooth",
-      block:"start"
-    })
-  },[])
+  //   element.scrollIntoView({
+  //     behavior:"smooth",
+  //     block:"start"
+  //   })
+  // },[])
 
   
   const requestScrollToPage = useCallback((page:number)=>{
@@ -106,7 +107,7 @@ export function useCurrentReaderPage() {
     }
 
     const element = document.querySelector(
-      `[data-page=${targetPage+1}]`
+      `[data-page="${targetPage+1}"]`
     )
 
     if(!element){
@@ -124,15 +125,15 @@ export function useCurrentReaderPage() {
 
   const scrollToNextPage = useCallback(()=>{
     requestScrollToPage(currentPage+1)
-  },[currentPage,scrollToPage])
+  },[currentPage,requestScrollToPage])
 
   const scrollToPreviousPage = useCallback(()=>{
     if(currentPage<=0){
-      return 0
+      return
     };
 
     requestScrollToPage(currentPage-1)
-  },[currentPage,scrollToPage])
+  },[currentPage,requestScrollToPage])
 
 
   // single page
@@ -157,7 +158,7 @@ export function useCurrentReaderPage() {
     targetPage,
     scrollToNextPage,
     scrollToPreviousPage,
-    scrollToPage,
+    // scrollToPage,
     requestScrollToPage,
 
     // clicke /tap single page

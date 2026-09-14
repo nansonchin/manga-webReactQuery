@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useLazyImage } from "../../hooks/useLazyImage";
+import "./ReaderImage.scss"
 
 type ReaderImageProps = {
   src: string;

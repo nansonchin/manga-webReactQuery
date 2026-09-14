@@ -5,7 +5,8 @@ type UseReaderControlsProps = {
   totalPages: number;
   scrollToNextPage: () => void;
   scrollToPreviousPage: () => void;
-  scrollToPage:(page:number)=>void;
+  // scrollToPage:(page:number)=>void;
+  requestScrollToPage:(page:number)=>void;
 
   nextChapter: () => void;
   previousChapter: () => void;
@@ -21,7 +22,8 @@ export function useReaderControls({
 
   scrollToNextPage,
   scrollToPreviousPage,
-  scrollToPage,
+  // scrollToPage,
+  requestScrollToPage,
 
   nextChapter,
   previousChapter,
@@ -99,8 +101,8 @@ export function useReaderControls({
       return;
     }
 
-    scrollToPage(page)
-  },[scrollToPage,totalPages])
+    requestScrollToPage(page)
+  },[requestScrollToPage,totalPages])
 
   const scrollPage = useMemo(
     () => ({

@@ -86,7 +86,7 @@ function ReaderPageContent({ mangaId, chapterId }: ReaderPageContentProps) {
     // long - strip page
     scrollToNextPage,
     scrollToPreviousPage,
-    scrollToPage,
+    // scrollToPage,
     targetPage,
     requestScrollToPage,
 
@@ -104,7 +104,8 @@ function ReaderPageContent({ mangaId, chapterId }: ReaderPageContentProps) {
 
     scrollToNextPage,
     scrollToPreviousPage,
-    scrollToPage,
+    // scrollToPage,
+    requestScrollToPage,
 
     nextChapter: goNextChapter,
     previousChapter: goPreviousChapter,
