@@ -8,10 +8,14 @@ import { useChapterNavigation } from "../features/readerNavigation/hooks/useChap
 import { useInfiniteChapterList } from "../features/chapter/hooks/useInfiniteChapterList";
 import { useKeyboardNavigation } from "../features/reader/hooks/useKeyboardNavigation";
 import { useReaderControls } from "../features/reader/hooks/useReaderControl";
-import { ReaderSettingsProvider, useReaderSettings } from "../features/readerSetting/context/ReaderSettingContext";
+import {
+  ReaderSettingsProvider,
+  useReaderSettings,
+} from "../features/readerSetting/context/ReaderSettingContext";
 import ReaderSettingsPanel from "../features/readerSetting/components/ReaderSettingsPanel";
 import LongStripReader from "../features/reader/components/LongStripReader/LongStripReader";
 import SinglePageReader from "../features/reader/components/SinglePageReader/SinglePageReader";
+import { ReaderProgress } from "../features/readerProgress/components/ReaderProgress";
 
 const RENDER_AHEAD = 1;
 const PREFETCH_AHEAD = 3;
@@ -36,8 +40,8 @@ type ReaderPageContentProps = {
 };
 
 function ReaderPageContent({ mangaId, chapterId }: ReaderPageContentProps) {
-  const { settings} = useReaderSettings()
-  
+  const { settings } = useReaderSettings();
+
   const { data, isPending, isError, error } = useChapterPages(chapterId!);
 
   // to fetch next chapter & previous chapter
@@ -75,8 +79,20 @@ function ReaderPageContent({ mangaId, chapterId }: ReaderPageContentProps) {
     isFetchNextPageError,
   );
 
-  const { currentPage, observePage, scrollToNextPage, scrollToPreviousPage,goToNextPage,goToPreviousPage } =
-    useCurrentReaderPage();
+  const {
+    currentPage,
+    observePage,
+    
+    // long - strip page
+    scrollToNextPage,
+    scrollToPreviousPage,
+    scrollToPage,
+
+    // single click page
+    goToNextPage,
+    goToPreviousPage,
+    goToPage,
+  } = useCurrentReaderPage();
 
   useReaderPreload(data ?? [], currentPage, PREFETCH_AHEAD);
 
@@ -87,8 +103,10 @@ function ReaderPageContent({ mangaId, chapterId }: ReaderPageContentProps) {
     scrollToPreviousPage,
     nextChapter: goNextChapter,
     previousChapter: goPreviousChapter,
-    clickNextPage:goToNextPage,
-    clickPreviousPage:goToPreviousPage
+    clickNextPage: goToNextPage,
+    clickPreviousPage: goToPreviousPage,
+    goToPage,
+    scrollToPage,
   });
 
   useKeyboardNavigation({
@@ -103,9 +121,10 @@ function ReaderPageContent({ mangaId, chapterId }: ReaderPageContentProps) {
     return <div>Error: {error.message}</div>;
   }
 
-  const pages= data ??[]
+  const pages = data ?? [];
 
-  const readerClassName = settings.theme === "dark"? "reader reader-dark": "reader reader-light"
+  const readerClassName =
+    settings.theme === "dark" ? "reader reader-dark" : "reader reader-light";
 
   console.log({
     isChaptersPending,
@@ -117,7 +136,7 @@ function ReaderPageContent({ mangaId, chapterId }: ReaderPageContentProps) {
 
   return (
     <div className={readerClassName}>
-      <ReaderSettingsPanel/>
+      <ReaderSettingsPanel />
       <div
         style={{
           position: "fixed",
@@ -139,24 +158,29 @@ function ReaderPageContent({ mangaId, chapterId }: ReaderPageContentProps) {
         navigationStatus={navigationStatus}
       />
 
-     {
-      settings.pageMode === "long-strip" ? (
+      {settings.pageMode === "long-strip" ? (
         <LongStripReader
           pages={pages}
           currentPage={currentPage}
           renderAhead={RENDER_AHEAD}
           observePage={observePage}
         />
-      ):(
+      ) : (
         <SinglePageReader
           pages={pages}
           currentPage={currentPage}
-          observePage={observePage}
+          // observePage={observePage}
           onNextPage={controls.clickPage.clickNext}
           onPreviousPage={controls.clickPage.clickPrevious}
         />
-      )
-     }
+      )}
+      <div>
+        <ReaderProgress
+          currentPage={currentPage}
+          totalPages={pages.length}
+          onGoToPage={settings.pageMode === "long-strip" ? controls.scrollPage.goTo:controls.clickPage.goTo}
+        />
+      </div>
     </div>
   );
 }

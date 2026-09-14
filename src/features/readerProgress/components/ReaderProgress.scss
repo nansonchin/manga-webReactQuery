@@ -1,0 +1,73 @@
+.reader-progress{
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 100;
+    padding: 6px 12px;
+    background: rgba(0,0,0,0.7);
+    color: white;
+    font-size: 14px;
+    user-select: none;
+    pointer-events: none;
+}
+
+.reader-progress-overlay{
+
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,0.5);
+}
+
+.reader-progress-dialog{
+    width:280px;
+    padding: 24px;
+    border-radius:12px;
+    background: white;
+    color:#111;
+    box-shadow:0 10px 30px rgba(0,00,0.25)
+}
+
+.reader-progress-dialog h2{
+    margin:0 0 16px;
+}
+
+.reader-progress-dialog input{
+    width: 100%;
+    box-sizing: border-box;
+    padding: 10px 12px;
+    border:1px solid #ccc;
+    border-radius:6px;
+    font-size:16px
+}
+
+.reader-progress-actions{
+    display: flex;
+    justify-content: flex-end;
+    gap:8px;
+    margin-top:16px
+}
+
+.reader-progress-actions button{
+    padding:8px 14px;
+    border:none;
+    border-radius:6px;
+    cursor:pointer;
+}
+
+.reader-progress-action button:last-child{
+    background: #111;
+    color:white
+}
+
+
+.reader-progress.dialog p{
+    margin:12px 0 0;
+    color:#666;
+    font-size:13px
+}
+

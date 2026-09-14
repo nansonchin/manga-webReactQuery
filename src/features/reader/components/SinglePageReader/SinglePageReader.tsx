@@ -10,9 +10,9 @@ type ReaderPageData={
 type SinglePageReaderProps ={
     pages:ReaderPageData[];
     currentPage:number;
-    observePage:(
-        element:HTMLElement|null,
-    )=>void;
+    // observePage:(
+    //     element:HTMLElement|null,
+    // )=>void;
     onNextPage:()=>void;
     onPreviousPage:()=>void;
 };
@@ -20,7 +20,7 @@ type SinglePageReaderProps ={
 function SinglePageReader({
     pages,
     currentPage,
-    observePage,
+    // observePage,
     onNextPage,
     onPreviousPage
 }:SinglePageReaderProps){
@@ -39,7 +39,7 @@ function SinglePageReader({
                         <div
                             key={page.index}
                             data-page={page.index+1}
-                            ref={observePage}
+                            // ref={observePage}
                             className={isCurrent? "reader-single-page-item-active":"reader-single-page-item"}
                             aria-hidden={!isCurrent}
                         >

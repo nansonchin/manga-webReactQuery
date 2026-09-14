@@ -113,6 +113,10 @@ export function useCurrentReaderPage() {
     setCurrentPage((page)=>Math.max(0,page-1))
   },[])
 
+  const goToPage = useCallback((page:number)=>{
+    setCurrentPage(page);
+  },[])
+
 
   return {
     currentPage,
@@ -124,6 +128,7 @@ export function useCurrentReaderPage() {
 
     // clicke /tap single page
     goToNextPage,
-    goToPreviousPage
+    goToPreviousPage,
+    goToPage
   };
 }
