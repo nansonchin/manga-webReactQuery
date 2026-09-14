@@ -11,6 +11,10 @@ export function useCurrentReaderPage() {
 
   const pageElements = useRef(new Set<HTMLElement>())
 
+  // page that the long strip page need to jump to when the dom is not ready for the page rendering
+  const [targetPage,setTargetPage] = useState<number|null>(null);
+
+
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
@@ -91,8 +95,35 @@ export function useCurrentReaderPage() {
     })
   },[])
 
+  
+  const requestScrollToPage = useCallback((page:number)=>{
+    setTargetPage(page)
+  },[])
+
+  useEffect(()=>{
+    if(targetPage === null){
+      return;
+    }
+
+    const element = document.querySelector(
+      `[data-page=${targetPage+1}]`
+    )
+
+    if(!element){
+      return;
+    }
+
+    element.scrollIntoView({
+
+      behavior:"smooth",
+      block:"start"
+    })
+
+    setTargetPage(null)
+  },[targetPage])
+
   const scrollToNextPage = useCallback(()=>{
-    scrollToPage(currentPage+1)
+    requestScrollToPage(currentPage+1)
   },[currentPage,scrollToPage])
 
   const scrollToPreviousPage = useCallback(()=>{
@@ -100,8 +131,9 @@ export function useCurrentReaderPage() {
       return 0
     };
 
-    scrollToPage(currentPage-1)
+    requestScrollToPage(currentPage-1)
   },[currentPage,scrollToPage])
+
 
   // single page
 
@@ -122,9 +154,11 @@ export function useCurrentReaderPage() {
     currentPage,
     observePage,
     // long strip page
+    targetPage,
     scrollToNextPage,
     scrollToPreviousPage,
     scrollToPage,
+    requestScrollToPage,
 
     // clicke /tap single page
     goToNextPage,

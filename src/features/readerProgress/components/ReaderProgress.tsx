@@ -1,5 +1,5 @@
 import { useState } from "react";
-import "./readerProgress.scss";
+import "./ReaderProgress.scss";
 import React from "react";
 
 type ReaderProgressProps = {

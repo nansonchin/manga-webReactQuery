@@ -9,6 +9,7 @@ type LongStripReaderProps = {
   pages: ReaderPageData[];
   currentPage: number;
   renderAhead: number;
+  targetPage:number|null;
   observePage: (element: HTMLElement | null) => void;
 };
 
@@ -16,12 +17,17 @@ function LongStripReader({
   pages,
   currentPage,
   renderAhead,
+  targetPage,
   observePage,
 }: LongStripReaderProps) {
+  const renderFromPage = Math.max(
+    currentPage,
+    targetPage ?? 0,
+  )
   return (
     <div className="reader-long-strip">
       {pages.map((page) => {
-        const shouldLoad = page.index <= currentPage + renderAhead;
+        const shouldLoad = page.index <= renderFromPage + renderAhead;
         return (
           <div key={page.index} data-page={page.index+1} ref={observePage}>
             <ReaderImage

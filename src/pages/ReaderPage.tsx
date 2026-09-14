@@ -87,6 +87,8 @@ function ReaderPageContent({ mangaId, chapterId }: ReaderPageContentProps) {
     scrollToNextPage,
     scrollToPreviousPage,
     scrollToPage,
+    targetPage,
+    requestScrollToPage,
 
     // single click page
     goToNextPage,
@@ -99,14 +101,18 @@ function ReaderPageContent({ mangaId, chapterId }: ReaderPageContentProps) {
   const controls = useReaderControls({
     currentPage,
     totalPages: data?.length ?? 0,
+
     scrollToNextPage,
     scrollToPreviousPage,
+    scrollToPage,
+
     nextChapter: goNextChapter,
     previousChapter: goPreviousChapter,
+
     clickNextPage: goToNextPage,
     clickPreviousPage: goToPreviousPage,
     goToPage,
-    scrollToPage,
+
   });
 
   useKeyboardNavigation({
@@ -164,6 +170,7 @@ function ReaderPageContent({ mangaId, chapterId }: ReaderPageContentProps) {
           currentPage={currentPage}
           renderAhead={RENDER_AHEAD}
           observePage={observePage}
+          targetPage={targetPage}
         />
       ) : (
         <SinglePageReader
