@@ -46,6 +46,7 @@ function ReaderPageContent({ mangaId, chapterId }: ReaderPageContentProps) {
   const { settings } = useReaderSettings();
 
   const {pages, chapters, pagesQuery, chaptersQuery} = useReaderData({mangaId,chapterId})
+  const totalPages = pages.length
 
   const isLongStrip = settings.pageMode==="long-strip"
   const {
@@ -84,8 +85,9 @@ function ReaderPageContent({ mangaId, chapterId }: ReaderPageContentProps) {
     goToPreviousPage,
     goToPage,
   } = useCurrentReaderPage({
-    totalPages:pages.length
+    totalPages
   });
+
 
   const {observePage} = useLongStripPageTrackingProps({enabled:isLongStrip,onPageChange:setCurrentPageFromTracking})
 
@@ -93,18 +95,17 @@ function ReaderPageContent({ mangaId, chapterId }: ReaderPageContentProps) {
 
   const controls = useReaderControls({
     currentPage,
-    totalPages: pages?.length ?? 0,
-
-    scrollToNextPage,
-    scrollToPreviousPage,
+    totalPages,
+    // scrollToNextPage,
+    // scrollToPreviousPage,
     // scrollToPage,
-    requestScrollToPage,
+    // requestScrollToPage,
 
     nextChapter: goNextChapter,
     previousChapter: goPreviousChapter,
 
-    clickNextPage: goToNextPage,
-    clickPreviousPage: goToPreviousPage,
+    // clickNextPage: goToNextPage,
+    // clickPreviousPage: goToPreviousPage,
     goToPage,
 
   });
@@ -113,7 +114,7 @@ function ReaderPageContent({ mangaId, chapterId }: ReaderPageContentProps) {
     controls,
   });
 
-  if (pagesQuery.isPending || chaptersQuery.isPending) {
+  if (pagesQuery.isPending) {
     return <div>Loading pages ...</div>;
   }
 
