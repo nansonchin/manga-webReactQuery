@@ -3,6 +3,7 @@ import type { ChapterPage } from "../../reader/types";
 import type { ChapterListResponse } from "../../chapter/types";
 import type { useInfiniteChapterList } from "../../chapter/hooks/useInfiniteChapterList";
 import { useEffect, useState } from "react";
+import { getChapterNavigation } from "../../../utils/getChapterNavigation";
 
 type Chapter = ChapterListResponse["items"][number];
 
@@ -19,26 +20,19 @@ export function useChapterNavigation(
   mangaId: string,
   currentChapterId: string,
   hasMoreChapters: boolean,
-  loadMoreChapters: () => Promise<void>,
-  isLoadingMoreChapters: boolean,
-  isFetchNextPageError:boolean,
+  // loadMoreChapters: () => Promise<void>,
+  // isLoadingMoreChapters: boolean,
+  // isFetchNextPageError:boolean,
 ) {
   const navigate = useNavigate();
 
+  console.log("Chapters[][]",chapters)
   const [pendingNavigation, setPendingNavigation] =
     useState<PendingNavigation>(null);
 
-  const currentIndex = chapters.findIndex(
-    (chapter) => chapter.id === currentChapterId,
-  );
+    const {nextChapter,previousChapter}= getChapterNavigation(chapters,currentChapterId)
+
   // chapter sorting [10,9,8]
-
-  const previousChapter =
-    currentIndex >= 0 && currentIndex < chapters.length - 1
-      ? chapters[currentIndex + 1]
-      : null;
-
-  const nextChapter = currentIndex > 0 ? chapters[currentIndex - 1] : null;
 
   const navigateToChapter = (chapter: Chapter) => {
     navigate(`/manga/${mangaId}/chapter/${chapter.id}`);
@@ -50,9 +44,9 @@ export function useChapterNavigation(
       return;
     }
 
-    if (isLoadingMoreChapters) {
-      return;
-    }
+    // if (isLoadingMoreChapters) {
+    //   return;
+    // }
 
     if (!hasMoreChapters) {
       return;
@@ -60,12 +54,12 @@ export function useChapterNavigation(
 
     setPendingNavigation("previous");
 
-    try {
-      await loadMoreChapters();
-    } catch (error) {
-      console.error("Failed to load previous chapter", error);
+    // try {
+    //   await loadMoreChapters();
+    // } catch (error) {
+    //   console.error("Failed to load previous chapter", error);
       // setPendingNavigation(null);
-    }
+    // }
     // const newChapters = result.data?.pages.flatMap((page) => page.data ?? []);
 
     // const newCurrentIndex = newChapters?.findIndex(
@@ -81,48 +75,62 @@ export function useChapterNavigation(
     navigateToChapter(nextChapter);
   };
 
-  useEffect(() => {
-    if (!pendingNavigation) {
-      return;
-    }
+  const needsMoreChapters = pendingNavigation === "previous" && !previousChapter && hasMoreChapters;
 
+  // useEffect(() => {
+  //   if (!pendingNavigation) {
+  //     return;
+  //   }
+
+  //   if(pendingNavigation!=="previous"){
+  //     return;
+  //   }
+
+  //   if (isLoadingMoreChapters) {
+  //     return;
+  //   }
+
+  //   if(isFetchNextPageError){
+  //     return;
+  //   }
+
+  //   if (pendingNavigation === "previous" && previousChapter) {
+  //     setPendingNavigation(null);
+  //     navigateToChapter(previousChapter);
+  //     return;
+  //   }
+  //   if (!hasMoreChapters) {
+  //     setPendingNavigation(null);
+  //   }
+  // }, [
+  //   pendingNavigation,
+  //   previousChapter,
+  //   isLoadingMoreChapters,
+  //   hasMoreChapters,
+  //   isFetchNextPageError
+  // ]);
+
+  useEffect(()=>{
     if(pendingNavigation!=="previous"){
       return;
     }
-
-    if (isLoadingMoreChapters) {
+    if(!previousChapter){
       return;
     }
 
-    if(isFetchNextPageError){
-      return;
-    }
-
-    if (pendingNavigation === "previous" && previousChapter) {
-      setPendingNavigation(null);
-      navigateToChapter(previousChapter);
-      return;
-    }
-    if (!hasMoreChapters) {
-      setPendingNavigation(null);
-    }
-  }, [
-    pendingNavigation,
-    previousChapter,
-    isLoadingMoreChapters,
-    hasMoreChapters,
-    isFetchNextPageError
-  ]);
+    setPendingNavigation(null);
+    navigateToChapter(previousChapter)
+  },[pendingNavigation,previousChapter,pendingNavigation])
 
   let navigationStatus :NavigationStatus ="idle";
 
-  if(pendingNavigation ==="previous"){
-    if(isLoadingMoreChapters){
-      navigationStatus="loading"
-    }else if (isFetchNextPageError){
-      navigationStatus="error"
-    }
-  }
+  // if(pendingNavigation ==="previous"){
+  //   if(isLoadingMoreChapters){
+  //     navigationStatus="loading"
+  //   }else if (isFetchNextPageError){
+  //     navigationStatus="error"
+  //   }
+  // }
 
   return {
     previousChapter,
@@ -132,6 +140,7 @@ export function useChapterNavigation(
     hasPrevious: !!previousChapter || hasMoreChapters,
     hasNext: !!nextChapter,
     pendingNavigation,
-    navigationStatus
+    // navigationStatus
+    needsMoreChapters
   };
 }

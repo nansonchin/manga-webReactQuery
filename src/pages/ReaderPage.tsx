@@ -16,6 +16,7 @@ import ReaderSettingsPanel from "../features/readerSetting/components/ReaderSett
 import LongStripReader from "../features/reader/components/LongStripReader/LongStripReader";
 import SinglePageReader from "../features/reader/components/SinglePageReader/SinglePageReader";
 import { ReaderProgress } from "../features/readerProgress/components/ReaderProgress";
+import { useEffect } from "react";
 
 const RENDER_AHEAD = 1;
 const PREFETCH_AHEAD = 3;
@@ -67,16 +68,17 @@ function ReaderPageContent({ mangaId, chapterId }: ReaderPageContentProps) {
     hasPrevious,
     goNextChapter,
     goPreviousChapter,
-    navigationStatus,
+    // navigationStatus,
     pendingNavigation,
+    needsMoreChapters
   } = useChapterNavigation(
     chapters,
     mangaId,
     chapterId,
     !!hasNextPage,
-    loadMoreChapters,
-    isFetchingNextPage,
-    isFetchNextPageError,
+    // loadMoreChapters,
+    // isFetchingNextPage,
+    // isFetchNextPageError,
   );
 
   const {
@@ -119,6 +121,20 @@ function ReaderPageContent({ mangaId, chapterId }: ReaderPageContentProps) {
   useKeyboardNavigation({
     controls,
   });
+
+  useEffect(()=>{
+    if(!needsMoreChapters){
+      return;
+    }
+    if(isFetchingNextPage){
+      return
+    }
+    if(!hasNextPage){
+      return
+    }
+
+    void fetchNextPage()
+  },[needsMoreChapters,isFetchingNextPage,hasNextPage,fetchNextPage])
 
   if (isPending || isChaptersPending) {
     return <div>Loading pages ...</div>;
