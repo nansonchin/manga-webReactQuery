@@ -47,7 +47,7 @@ function ReaderPageContent({ mangaId, chapterId }: ReaderPageContentProps) {
 
   const {pages, chapters, pagesQuery, chaptersQuery} = useReaderData({mangaId,chapterId})
 
-
+  const isLongStrip = settings.pageMode==="long-strip"
   const {
     previousChapter,
     nextChapter,
@@ -87,7 +87,7 @@ function ReaderPageContent({ mangaId, chapterId }: ReaderPageContentProps) {
     totalPages:pages.length
   });
 
-  const {observePage} = useLongStripPageTrackingProps({onPageChange:setCurrentPageFromTracking})
+  const {observePage} = useLongStripPageTrackingProps({enabled:isLongStrip,onPageChange:setCurrentPageFromTracking})
 
   useReaderPreload(pages, currentPage, PREFETCH_AHEAD);
 

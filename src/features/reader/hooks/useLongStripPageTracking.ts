@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useRef } from "react";
 
 type UseLongStripPageTrackingProps = {
+    enabled:boolean;
   onPageChange: (page: number) => void;
 };
 
 export function useLongStripPageTrackingProps({
+    enabled,
   onPageChange,
 }: UseLongStripPageTrackingProps) {
   const visiblePages = useRef(new Map<Element, number>());
@@ -14,6 +16,9 @@ export function useLongStripPageTrackingProps({
 
   // observe and update the current page
   useEffect(() => {
+    if(!enabled){
+        return
+    }
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
@@ -66,17 +71,19 @@ export function useLongStripPageTrackingProps({
       observerRef.current = null;
       visiblePages.current.clear();
     };
-  }, [onPageChange]);
+  }, [enabled, onPageChange]);
   // register page Dom element to IntersectionnObserver
   const observePage = useCallback((element: HTMLElement | null) => {
     if (!element) {
       return;
     }
-    if (element) {
-      observerRef.current?.observe(element);
       pageElements.current.add(element);
+
+    if (enabled) {
+      observerRef.current?.observe(element);
     }
-  }, []);
+      pageElements.current.add(element);
+  }, [enabled]);
 
   return {
     observePage,
