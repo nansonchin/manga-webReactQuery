@@ -20,13 +20,14 @@ export function useChapterNavigation(
   mangaId: string,
   currentChapterId: string,
   hasMoreChapters: boolean,
-  // loadMoreChapters: () => Promise<void>,
-  // isLoadingMoreChapters: boolean,
-  // isFetchNextPageError:boolean,
+  loadMoreChapters: () => Promise<void>,
+  isLoadingMoreChapters: boolean,
+  isFetchNextPageError:boolean,
 ) {
   const navigate = useNavigate();
 
   console.log("Chapters[][]",chapters)
+  
   const [pendingNavigation, setPendingNavigation] =
     useState<PendingNavigation>(null);
 
@@ -111,6 +112,31 @@ export function useChapterNavigation(
   // ]);
 
   useEffect(()=>{
+    if(pendingNavigation !=="previous"){
+      return;
+    }
+
+    if(previousChapter){
+      return
+    }
+
+    if(!hasMoreChapters){
+      setPendingNavigation(null)
+      return
+    }
+
+    if(isLoadingMoreChapters){
+      return
+    }
+
+    if(isFetchNextPageError){
+      return
+    }
+
+    void loadMoreChapters()
+  },[pendingNavigation, previousChapter,hasMoreChapters,isLoadingMoreChapters,isFetchNextPageError,loadMoreChapters])
+
+  useEffect(()=>{
     if(pendingNavigation!=="previous"){
       return;
     }
@@ -124,13 +150,13 @@ export function useChapterNavigation(
 
   let navigationStatus :NavigationStatus ="idle";
 
-  // if(pendingNavigation ==="previous"){
-  //   if(isLoadingMoreChapters){
-  //     navigationStatus="loading"
-  //   }else if (isFetchNextPageError){
-  //     navigationStatus="error"
-  //   }
-  // }
+  if(pendingNavigation ==="previous"){
+    if(isLoadingMoreChapters){
+      navigationStatus="loading"
+    }else if (isFetchNextPageError){
+      navigationStatus="error"
+    }
+  }
 
   return {
     previousChapter,
@@ -140,7 +166,7 @@ export function useChapterNavigation(
     hasPrevious: !!previousChapter || hasMoreChapters,
     hasNext: !!nextChapter,
     pendingNavigation,
-    // navigationStatus
+    navigationStatus,
     needsMoreChapters
   };
 }

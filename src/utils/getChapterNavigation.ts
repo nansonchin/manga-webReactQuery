@@ -15,6 +15,13 @@ export function getChapterNavigation(
         (chapter)=>chapter.id === currentChapterId
     )
 
+    if(currentIndex === -1){
+        return{
+            previousChapter:null,
+            nextChapter:null
+        }
+    }
+
     const previousChapter = currentIndex >= 0 && currentIndex < chapters.length-1 ? chapters[currentIndex+1]:null;
 
     const nextChapter = currentIndex >0 ? chapters[currentIndex-1]:null

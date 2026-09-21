@@ -68,17 +68,17 @@ function ReaderPageContent({ mangaId, chapterId }: ReaderPageContentProps) {
     hasPrevious,
     goNextChapter,
     goPreviousChapter,
-    // navigationStatus,
     pendingNavigation,
-    needsMoreChapters
+    needsMoreChapters,
+    navigationStatus
   } = useChapterNavigation(
     chapters,
     mangaId,
     chapterId,
     !!hasNextPage,
-    // loadMoreChapters,
-    // isFetchingNextPage,
-    // isFetchNextPageError,
+    loadMoreChapters,
+    isFetchingNextPage,
+    isFetchNextPageError,
   );
 
   const {
@@ -122,20 +122,6 @@ function ReaderPageContent({ mangaId, chapterId }: ReaderPageContentProps) {
     controls,
   });
 
-  useEffect(()=>{
-    if(!needsMoreChapters){
-      return;
-    }
-    if(isFetchingNextPage){
-      return
-    }
-    if(!hasNextPage){
-      return
-    }
-
-    void fetchNextPage()
-  },[needsMoreChapters,isFetchingNextPage,hasNextPage,fetchNextPage])
-
   if (isPending || isChaptersPending) {
     return <div>Loading pages ...</div>;
   }
@@ -154,7 +140,7 @@ function ReaderPageContent({ mangaId, chapterId }: ReaderPageContentProps) {
     isFetchingNextPage,
     isFetchNextPageError,
     pendingNavigation,
-    navigationStatus,
+    // navigationStatus,
   });
 
   return (
