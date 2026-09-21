@@ -36,7 +36,7 @@ export function ReaderProgress({
       return;
     }
 
-    onGoToPage(page);
+    onGoToPage(page-1);
     setIsOpen(false);
   };
 

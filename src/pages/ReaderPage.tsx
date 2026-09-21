@@ -17,6 +17,7 @@ import LongStripReader from "../features/reader/components/LongStripReader/LongS
 import SinglePageReader from "../features/reader/components/SinglePageReader/SinglePageReader";
 import { ReaderProgress } from "../features/readerProgress/components/ReaderProgress";
 import { useEffect } from "react";
+import { useReaderData } from "../features/reader/hooks/useReaderData";
 
 const RENDER_AHEAD = 1;
 const PREFETCH_AHEAD = 3;
@@ -43,23 +44,7 @@ type ReaderPageContentProps = {
 function ReaderPageContent({ mangaId, chapterId }: ReaderPageContentProps) {
   const { settings } = useReaderSettings();
 
-  const { data, isPending, isError, error } = useChapterPages(chapterId!);
-
-  // to fetch next chapter & previous chapter
-  const {
-    data: chapterData,
-    isPending: isChaptersPending,
-    hasNextPage,
-    fetchNextPage,
-    isFetchingNextPage,
-    isFetchNextPageError,
-  } = useInfiniteChapterList(mangaId!);
-
-  const chapters = chapterData?.pages.flatMap((page) => page.items) ?? [];
-
-  const loadMoreChapters = async () => {
-    await fetchNextPage();
-  };
+  const {pages, chapters, pagesQuery, chaptersQuery} = useReaderData({mangaId,chapterId})
 
   const {
     previousChapter,
@@ -75,10 +60,10 @@ function ReaderPageContent({ mangaId, chapterId }: ReaderPageContentProps) {
     chapters,
     mangaId,
     chapterId,
-    !!hasNextPage,
-    loadMoreChapters,
-    isFetchingNextPage,
-    isFetchNextPageError,
+    chaptersQuery.hasNextPage?? false,
+    chaptersQuery.fetchNextPage,
+    chaptersQuery.isFetchingNextPage,
+    chaptersQuery.isFetchNextPageError,
   );
 
   const {
@@ -98,11 +83,11 @@ function ReaderPageContent({ mangaId, chapterId }: ReaderPageContentProps) {
     goToPage,
   } = useCurrentReaderPage();
 
-  useReaderPreload(data ?? [], currentPage, PREFETCH_AHEAD);
+  useReaderPreload(pages, currentPage, PREFETCH_AHEAD);
 
   const controls = useReaderControls({
     currentPage,
-    totalPages: data?.length ?? 0,
+    totalPages: pages?.length ?? 0,
 
     scrollToNextPage,
     scrollToPreviousPage,
@@ -122,26 +107,17 @@ function ReaderPageContent({ mangaId, chapterId }: ReaderPageContentProps) {
     controls,
   });
 
-  if (isPending || isChaptersPending) {
+  if (pagesQuery.isPending || chaptersQuery.isPending) {
     return <div>Loading pages ...</div>;
   }
 
-  if (isError) {
-    return <div>Error: {error.message}</div>;
+  if (pagesQuery.isError) {
+    return <div>Error: {pagesQuery.error.message}</div>;
   }
 
-  const pages = data ?? [];
 
   const readerClassName =
     settings.theme === "dark" ? "reader reader-dark" : "reader reader-light";
-
-  console.log({
-    isChaptersPending,
-    isFetchingNextPage,
-    isFetchNextPageError,
-    pendingNavigation,
-    // navigationStatus,
-  });
 
   return (
     <div className={readerClassName}>
