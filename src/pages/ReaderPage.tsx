@@ -18,6 +18,7 @@ import SinglePageReader from "../features/reader/components/SinglePageReader/Sin
 import { ReaderProgress } from "../features/readerProgress/components/ReaderProgress";
 import { useCallback, useEffect } from "react";
 import { useReaderData } from "../features/reader/hooks/useReaderData";
+import { useLongStripPageTrackingProps } from "../features/reader/hooks/useLongStripPageTracking";
 
 const RENDER_AHEAD = 1;
 const PREFETCH_AHEAD = 3;
@@ -46,10 +47,6 @@ function ReaderPageContent({ mangaId, chapterId }: ReaderPageContentProps) {
 
   const {pages, chapters, pagesQuery, chaptersQuery} = useReaderData({mangaId,chapterId})
 
-  //adapter
-  const loadMoreChapters = useCallback(async():Promise<void>=>{
-    await chaptersQuery.fetchNextPage()
-  },[chaptersQuery.fetchNextPage])
 
   const {
     previousChapter,
@@ -66,14 +63,14 @@ function ReaderPageContent({ mangaId, chapterId }: ReaderPageContentProps) {
     mangaId,
     chapterId,
     chaptersQuery.hasNextPage?? false,
-    loadMoreChapters,
+    chaptersQuery.fetchNextPage,
     chaptersQuery.isFetchingNextPage,
     chaptersQuery.isFetchNextPageError,
   );
 
   const {
     currentPage,
-    observePage,
+    setCurrentPageFromTracking,
     
     // long - strip page
     scrollToNextPage,
@@ -89,6 +86,8 @@ function ReaderPageContent({ mangaId, chapterId }: ReaderPageContentProps) {
   } = useCurrentReaderPage({
     totalPages:pages.length
   });
+
+  const {observePage} = useLongStripPageTrackingProps({onPageChange:setCurrentPageFromTracking})
 
   useReaderPreload(pages, currentPage, PREFETCH_AHEAD);
 

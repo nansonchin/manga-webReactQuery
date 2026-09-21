@@ -4,6 +4,7 @@ import type { ChapterListResponse } from "../../chapter/types";
 import type { useInfiniteChapterList } from "../../chapter/hooks/useInfiniteChapterList";
 import { useEffect, useState } from "react";
 import { getChapterNavigation } from "../../../utils/getChapterNavigation";
+import type { FetchNextPageOptions } from "@tanstack/react-query";
 
 type Chapter = ChapterListResponse["items"][number];
 
@@ -15,12 +16,14 @@ type NavigationStatus =
   | "loading"
   | "error"
 
+  type FetchNextPage =(options?:FetchNextPageOptions)=> Promise<unknown>
+
 export function useChapterNavigation(
   chapters: Chapter[],
   mangaId: string,
   currentChapterId: string,
   hasMoreChapters: boolean,
-  loadMoreChapters: () => Promise<void>,
+  fetchNextPage:FetchNextPage,
   isLoadingMoreChapters: boolean,
   isFetchNextPageError:boolean,
 ) {
@@ -133,8 +136,8 @@ export function useChapterNavigation(
       return
     }
 
-    void loadMoreChapters()
-  },[pendingNavigation, previousChapter,hasMoreChapters,isLoadingMoreChapters,isFetchNextPageError,loadMoreChapters])
+    void fetchNextPage()
+  },[pendingNavigation, previousChapter,hasMoreChapters,isLoadingMoreChapters,isFetchNextPageError,fetchNextPage])
 
   useEffect(()=>{
     if(pendingNavigation!=="previous"){

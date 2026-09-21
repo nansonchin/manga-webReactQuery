@@ -9,11 +9,6 @@ export function useCurrentReaderPage({totalPages}:useCurrentReaderPageProps) {
     // example: user is currently on page10 image
   const [currentPage, setCurrentPage] = useState(0);
 
-  const visiblePages = useRef(new Map<Element, number>());
-
-  const observerRef = useRef<IntersectionObserver | null>(null);
-
-  const pageElements = useRef(new Set<HTMLElement>())
 
   // page that the long strip page need to jump to when the dom is not ready for the page rendering
   const [targetPage,setTargetPage] = useState<number|null>(null);
@@ -26,71 +21,26 @@ export function useCurrentReaderPage({totalPages}:useCurrentReaderPageProps) {
     return  Math.min(Math.max(page,0),totalPages-1)
   },[totalPages])
 
-// observe and update the current page
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          const page = Number(entry.target.getAttribute("data-page"));
+  useEffect(()=>{
+    setCurrentPage((page)=>clampPage(page))
+  },[clampPage])
 
-          if (entry.isIntersecting) {
-            visiblePages.current.set(entry.target, page);
-          } else {
-            visiblePages.current.delete(entry.target);
-          }
-        });
-
-        const viewportCenter = window.innerHeight / 2;
-
-        const current = [...visiblePages.current.entries()].sort(([a], [b]) => {
-          const aRect = a.getBoundingClientRect();
-
-          const bRect = b.getBoundingClientRect();
-
-          const aCenter = aRect.top + aRect.height / 2;
-
-          const bCenter = bRect.top + bRect.height / 2;
-
-          return (
-            Math.abs(aCenter - viewportCenter) -
-            Math.abs(bCenter - viewportCenter)
-          );
-        })[0];
-
-        if (current) {
-          setCurrentPage(current[1] - 1);
-        }
-      },
-      {
-         threshold:0,
-    rootMargin:"-40% 0px -40% 0px"
-      },
-    );
-
-    observerRef.current = observer;
-
-    pageElements.current.forEach((element)=>{
-      observer.observe(element)
-    })
-
-    return () => {
-      observer.disconnect();
-      observerRef.current=null;
-      visiblePages.current.clear()
-    };
-  }, []);
-
-  // register page Dom element to IntersectionnObserver
-  const observePage = useCallback((element: HTMLElement | null) => {
-    if(!element){
-      return
+  const setCurrentPageFromTracking = useCallback((page:number)=>{
+    if(!Number.isInteger(page)){
+      return;
     }
-    if (element) {
-      observerRef.current?.observe(element);
-      pageElements.current.add(element)
-    }
-  }, []);
 
+    if(totalPages<=0){
+      return;
+    }
+
+    if(page<0 || page>= totalPages){
+      return;
+    }
+
+    setCurrentPage(page)
+  },[totalPages])
+  
 
   //long - strip page
   // const scrollToPage = useCallback((page:number)=>{
@@ -113,8 +63,8 @@ export function useCurrentReaderPage({totalPages}:useCurrentReaderPageProps) {
     if(totalPages<=0){
       return
     }
-    const safefPage = clampPage(page)
-    setTargetPage(page)
+    const safePage = clampPage(page)
+    setTargetPage(safePage)
   },[clampPage,totalPages])
 
   useEffect(()=>{
@@ -140,6 +90,9 @@ export function useCurrentReaderPage({totalPages}:useCurrentReaderPageProps) {
   },[targetPage])
 
   const scrollToNextPage = useCallback(()=>{
+    if(totalPages<=0){
+      return
+    }
     if(currentPage>=totalPages-1){
       return;
     }
@@ -160,6 +113,9 @@ export function useCurrentReaderPage({totalPages}:useCurrentReaderPageProps) {
 
   const goToNextPage = useCallback(()=>{
     setCurrentPage((page)=>{
+      if(totalPages <=0){
+        return 0
+      }
       if(page>=totalPages-1){
        return page;
       }
@@ -186,7 +142,8 @@ export function useCurrentReaderPage({totalPages}:useCurrentReaderPageProps) {
 
   return {
     currentPage,
-    observePage,
+    setCurrentPageFromTracking,
+    // observePage,
     // long strip page
     targetPage,
     scrollToNextPage,

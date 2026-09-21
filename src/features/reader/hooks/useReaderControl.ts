@@ -59,7 +59,7 @@ export function useReaderControls({
   }, [nextChapter]);
 
   const next = useCallback(() => {
-    const isLastPage = currentPage >= totalPages - 1;
+    const isLastPage = totalPages<=0 || currentPage >= totalPages - 1;
 
     if (isLastPage) {
       nextChapter();
@@ -81,11 +81,12 @@ export function useReaderControls({
   }, [currentPage, scrollPreviousPage, previousChapter]);
 
   const goToSpecificPage = useCallback((page:number)=>{
-    if(page<0){
-      return;
+    
+    if(!Number.isInteger(page)){
+      return
     }
 
-    if(page>=totalPages){
+    if(page<0 || page>= totalPages){
       return;
     }
 
@@ -93,11 +94,11 @@ export function useReaderControls({
   },[goToPage,totalPages])
 
   const scrollToSpecificPage = useCallback((page:number)=>{
-    if(page<0){
-      return;
+    if(!Number.isInteger(page)){
+      return
     }
 
-    if(page>=totalPages){
+    if(page<0 || page>=totalPages){
       return;
     }
 
