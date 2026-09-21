@@ -18,7 +18,7 @@ import SinglePageReader from "../features/reader/components/SinglePageReader/Sin
 import { ReaderProgress } from "../features/readerProgress/components/ReaderProgress";
 import { useCallback, useEffect } from "react";
 import { useReaderData } from "../features/reader/hooks/useReaderData";
-import { useLongStripPageTrackingProps } from "../features/reader/hooks/useLongStripPageTracking";
+import { useLongStripPageTracking } from "../features/reader/hooks/useLongStripPageTracking";
 
 const RENDER_AHEAD = 1;
 const PREFETCH_AHEAD = 3;
@@ -89,9 +89,15 @@ function ReaderPageContent({ mangaId, chapterId }: ReaderPageContentProps) {
   });
 
 
-  const {observePage} = useLongStripPageTrackingProps({enabled:isLongStrip,onPageChange:setCurrentPageFromTracking})
+  const {observePage} = useLongStripPageTracking({enabled:isLongStrip,onPageChange:setCurrentPageFromTracking})
 
   useReaderPreload(pages, currentPage, PREFETCH_AHEAD);
+
+  const nextPage = isLongStrip? scrollToNextPage:goToNextPage
+
+  const previousPage = isLongStrip? scrollToPreviousPage:goToPreviousPage
+
+  const goToReaderPage = isLongStrip? requestScrollToPage:goToPage
 
   const controls = useReaderControls({
     currentPage,
@@ -106,6 +112,8 @@ function ReaderPageContent({ mangaId, chapterId }: ReaderPageContentProps) {
 
     // clickNextPage: goToNextPage,
     // clickPreviousPage: goToPreviousPage,
+    nextPage,
+    previousPage,
     goToPage,
 
   });
@@ -163,15 +171,15 @@ function ReaderPageContent({ mangaId, chapterId }: ReaderPageContentProps) {
           pages={pages}
           currentPage={currentPage}
           // observePage={observePage}
-          onNextPage={controls.clickPage.clickNext}
-          onPreviousPage={controls.clickPage.clickPrevious}
+          onNextPage={nextPage}
+          onPreviousPage={previousPage}
         />
       )}
       <div>
         <ReaderProgress
           currentPage={currentPage}
           totalPages={pages.length}
-          onGoToPage={settings.pageMode === "long-strip" ? controls.scrollPage.goTo:controls.clickPage.goTo}
+          onGoToPage={goToReaderPage}
         />
       </div>
     </div>

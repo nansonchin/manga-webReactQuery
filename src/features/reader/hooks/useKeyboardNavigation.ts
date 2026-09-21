@@ -3,14 +3,6 @@ import { useEffect } from "react";
 type ReaderControls = {
   next: () => void;
   previous: () => void;
-  scrollPage: {
-    next: () => void;
-    previous: () => void;
-  };
-  chapter: {
-    nextChapter: () => void;
-    previousChapter: () => void;
-  };
   
 };
 
@@ -23,30 +15,30 @@ export function useKeyboardNavigation({
 }: UseKeyboardNavigationProps) {
   useEffect(() => {
     const handlerKeyDown = (event: KeyboardEvent) => {
-      switch (event.key) {
+      const target = event.target as HTMLElement |null;
+      if(target instanceof HTMLInputElement 
+        || target instanceof HTMLTextAreaElement 
+        || target instanceof HTMLSelectElement
+        || target?.isContentEditable
+      ){
+        return;
+      }
+
+      switch(event.key){
         case "ArrowRight":
-          event.preventDefault();
-          console.log("clicked")
-          controls.chapter.nextChapter();
-          break;
+          case "ArrowDown":{
+            event.preventDefault();
+            controls.next();
+            break;
+          }
 
-        case "ArrowLeft":
-          event.preventDefault();
-          controls.chapter.previousChapter();
-          break;
+          case "ArrowLeft": case "ArrowUp":{
+            event.preventDefault();
+            controls.previous()
+            break;
+          }
 
-        case "ArrowDown":
-          event.preventDefault();
-          controls.next();
-          break;
-
-        case "ArrowUp":
-          event.preventDefault();
-          controls.previous();
-          break;
-
-        default:
-          break;
+          default:break;
       }
     };
 

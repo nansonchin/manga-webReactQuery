@@ -5,7 +5,7 @@ type UseLongStripPageTrackingProps = {
   onPageChange: (page: number) => void;
 };
 
-export function useLongStripPageTrackingProps({
+export function useLongStripPageTracking({
     enabled,
   onPageChange,
 }: UseLongStripPageTrackingProps) {
