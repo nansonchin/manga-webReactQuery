@@ -16,7 +16,7 @@ import ReaderSettingsPanel from "../features/readerSetting/components/ReaderSett
 import LongStripReader from "../features/reader/components/LongStripReader/LongStripReader";
 import SinglePageReader from "../features/reader/components/SinglePageReader/SinglePageReader";
 import { ReaderProgress } from "../features/readerProgress/components/ReaderProgress";
-import { useEffect } from "react";
+import { useCallback, useEffect } from "react";
 import { useReaderData } from "../features/reader/hooks/useReaderData";
 
 const RENDER_AHEAD = 1;
@@ -46,6 +46,11 @@ function ReaderPageContent({ mangaId, chapterId }: ReaderPageContentProps) {
 
   const {pages, chapters, pagesQuery, chaptersQuery} = useReaderData({mangaId,chapterId})
 
+  //adapter
+  const loadMoreChapters = useCallback(async():Promise<void>=>{
+    await chaptersQuery.fetchNextPage()
+  },[chaptersQuery.fetchNextPage])
+
   const {
     previousChapter,
     nextChapter,
@@ -61,7 +66,7 @@ function ReaderPageContent({ mangaId, chapterId }: ReaderPageContentProps) {
     mangaId,
     chapterId,
     chaptersQuery.hasNextPage?? false,
-    chaptersQuery.fetchNextPage,
+    loadMoreChapters,
     chaptersQuery.isFetchingNextPage,
     chaptersQuery.isFetchNextPageError,
   );
@@ -81,7 +86,9 @@ function ReaderPageContent({ mangaId, chapterId }: ReaderPageContentProps) {
     goToNextPage,
     goToPreviousPage,
     goToPage,
-  } = useCurrentReaderPage();
+  } = useCurrentReaderPage({
+    totalPages:pages.length
+  });
 
   useReaderPreload(pages, currentPage, PREFETCH_AHEAD);
 

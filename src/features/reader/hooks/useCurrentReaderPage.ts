@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
-export function useCurrentReaderPage() {
+ type useCurrentReaderPageProps={
+  totalPages: number;
+ }
+
+export function useCurrentReaderPage({totalPages}:useCurrentReaderPageProps) {
     // to store the current page that showing out to the user device.
     // example: user is currently on page10 image
   const [currentPage, setCurrentPage] = useState(0);
@@ -13,6 +17,14 @@ export function useCurrentReaderPage() {
 
   // page that the long strip page need to jump to when the dom is not ready for the page rendering
   const [targetPage,setTargetPage] = useState<number|null>(null);
+
+  const clampPage = useCallback((page:number)=>{
+    if(totalPages<=0){
+      return 0;
+    }
+
+    return  Math.min(Math.max(page,0),totalPages-1)
+  },[totalPages])
 
 // observe and update the current page
   useEffect(() => {
@@ -98,8 +110,12 @@ export function useCurrentReaderPage() {
 
   
   const requestScrollToPage = useCallback((page:number)=>{
+    if(totalPages<=0){
+      return
+    }
+    const safefPage = clampPage(page)
     setTargetPage(page)
-  },[])
+  },[clampPage,totalPages])
 
   useEffect(()=>{
     if(targetPage === null){
@@ -124,6 +140,10 @@ export function useCurrentReaderPage() {
   },[targetPage])
 
   const scrollToNextPage = useCallback(()=>{
+    if(currentPage>=totalPages-1){
+      return;
+    }
+
     requestScrollToPage(currentPage+1)
   },[currentPage,requestScrollToPage])
 
@@ -139,16 +159,29 @@ export function useCurrentReaderPage() {
   // single page
 
   const goToNextPage = useCallback(()=>{
-    setCurrentPage((page)=>page+1)
-  },[])
+    setCurrentPage((page)=>{
+      if(page>=totalPages-1){
+       return page;
+      }
+
+      return page +1
+    })
+  },[totalPages])
 
   const goToPreviousPage = useCallback(()=>{
     setCurrentPage((page)=>Math.max(0,page-1))
   },[])
 
   const goToPage = useCallback((page:number)=>{
+    if(!Number.isInteger(page)){
+      return;
+    }
+
+    if(page<0 || page >= totalPages){
+      return;
+    }
     setCurrentPage(page);
-  },[])
+  },[totalPages])
 
 
   return {
