@@ -120,7 +120,7 @@ export function useChapterNavigation(
 
     setPendingNavigation(null);
     navigateToChapter(previousChapter)
-  },[pendingNavigation,previousChapter,pendingNavigation])
+  },[pendingNavigation,previousChapter])
 
   let navigationStatus :NavigationStatus ="idle";
 
