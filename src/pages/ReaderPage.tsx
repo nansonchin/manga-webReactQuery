@@ -46,10 +46,13 @@ type ReaderPageContentProps = {
 function ReaderPageContent({ mangaId, chapterId }: ReaderPageContentProps) {
   const { settings } = useReaderSettings();
 
-  const {pages, chapters, pagesQuery, chaptersQuery} = useReaderData({mangaId,chapterId})
-  const totalPages = pages.length
+  const { pages, chapters, pagesQuery, chaptersQuery } = useReaderData({
+    mangaId,
+    chapterId,
+  });
+  const totalPages = pages.length;
 
-  const isLongStrip = settings.pageMode==="long-strip"
+  const isLongStrip = settings.pageMode === "long-strip";
   const {
     previousChapter,
     nextChapter,
@@ -59,22 +62,21 @@ function ReaderPageContent({ mangaId, chapterId }: ReaderPageContentProps) {
     goPreviousChapter,
     pendingNavigation,
     needsMoreChapters,
-    navigationStatus
-  } = useChapterNavigation(
+    navigationStatus,
+  } = useChapterNavigation({
     chapters,
     mangaId,
-    chapterId,
-    chaptersQuery.hasNextPage?? false,
-    chaptersQuery.fetchNextPage,
-    chaptersQuery.isFetchingNextPage,
-    chaptersQuery.isFetchNextPageError,
-  );
-
+    currentChapterId: chapterId,
+    hasMoreChapters: chaptersQuery.hasNextPage ?? false,
+    fetchNextPage: chaptersQuery.fetchNextPage,
+    isLoadingMoreChapters: chaptersQuery.isFetchingNextPage,
+    isFetchNextPageError: chaptersQuery.isFetchNextPageError,
+  });
 
   const {
     currentPage,
     setCurrentPageFromTracking,
-    
+
     // long - strip page
     // scrollToNextPage,
     // scrollToPreviousPage,
@@ -87,21 +89,28 @@ function ReaderPageContent({ mangaId, chapterId }: ReaderPageContentProps) {
     goToPreviousPage,
     goToPage,
   } = useCurrentReaderPage({
-    totalPages
+    totalPages,
   });
 
-  const {targetPage,scrollToNextPage,scrollToPreviousPage,requestScrollToPage} = useLongStripNavigation({currentPage,totalPages})
+  const {
+    targetPage,
+    scrollToNextPage,
+    scrollToPreviousPage,
+    requestScrollToPage,
+  } = useLongStripNavigation({ currentPage, totalPages });
 
-
-  const {observePage} = useLongStripPageTracking({enabled:isLongStrip,onPageChange:setCurrentPageFromTracking})
+  const { observePage } = useLongStripPageTracking({
+    enabled: isLongStrip,
+    onPageChange: setCurrentPageFromTracking,
+  });
 
   useReaderPreload(pages, currentPage, PREFETCH_AHEAD);
 
-  const nextPage = isLongStrip? scrollToNextPage:goToNextPage
+  const nextPage = isLongStrip ? scrollToNextPage : goToNextPage;
 
-  const previousPage = isLongStrip? scrollToPreviousPage:goToPreviousPage
+  const previousPage = isLongStrip ? scrollToPreviousPage : goToPreviousPage;
 
-  const goToReaderPage = isLongStrip? requestScrollToPage:goToPage
+  const goToReaderPage = isLongStrip ? requestScrollToPage : goToPage;
 
   const controls = useReaderControls({
     currentPage,
@@ -119,7 +128,6 @@ function ReaderPageContent({ mangaId, chapterId }: ReaderPageContentProps) {
     nextPage,
     previousPage,
     goToPage,
-
   });
 
   useKeyboardNavigation({
@@ -133,7 +141,6 @@ function ReaderPageContent({ mangaId, chapterId }: ReaderPageContentProps) {
   if (pagesQuery.isError) {
     return <div>Error: {pagesQuery.error.message}</div>;
   }
-
 
   const readerClassName =
     settings.theme === "dark" ? "reader reader-dark" : "reader reader-light";
@@ -150,7 +157,7 @@ function ReaderPageContent({ mangaId, chapterId }: ReaderPageContentProps) {
           zIndex: 10,
         }}
       >
-        Current Page : {currentPage+1}
+        Current Page : {currentPage + 1}
       </div>
       <ReaderNavigation
         // previousChapter={previousChapter}

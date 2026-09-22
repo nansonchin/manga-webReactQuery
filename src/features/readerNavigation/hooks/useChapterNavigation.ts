@@ -15,15 +15,24 @@ type PendingNavigation = "previous" | "next" | null;
 
   type FetchNextPage =(options?:FetchNextPageOptions)=> Promise<unknown>
 
-export function useChapterNavigation(
-  chapters: Chapter[],
+  type UseChapterNavigationProps={
+      chapters: Chapter[],
   mangaId: string,
   currentChapterId: string,
   hasMoreChapters: boolean,
   fetchNextPage:FetchNextPage,
   isLoadingMoreChapters: boolean,
   isFetchNextPageError:boolean,
-) {
+  }
+export function useChapterNavigation({
+  chapters,
+  mangaId,
+  currentChapterId,
+  hasMoreChapters,
+  fetchNextPage,
+  isLoadingMoreChapters,
+  isFetchNextPageError,
+}:UseChapterNavigationProps) {
   const navigate = useNavigate();
 
   console.log("Chapters[][]",chapters)
@@ -35,9 +44,9 @@ export function useChapterNavigation(
 
   // chapter sorting [10,9,8]
 
-  const navigateToChapter = (chapter: Chapter) => {
+  const navigateToChapter = useCallback((chapter: Chapter) => {
     navigate(`/manga/${mangaId}/chapter/${chapter.id}`);
-  };
+  },[navigate,mangaId]);
 
   const goPreviousChapter = useCallback( () => {
     if (previousChapter) {
