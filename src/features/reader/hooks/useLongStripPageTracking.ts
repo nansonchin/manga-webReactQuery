@@ -77,7 +77,6 @@ export function useLongStripPageTracking({
     if (!element) {
       return;
     }
-      pageElements.current.add(element);
 
     if (enabled) {
       observerRef.current?.observe(element);

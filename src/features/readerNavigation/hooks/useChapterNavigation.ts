@@ -2,19 +2,16 @@ import { useNavigate } from "react-router-dom";
 import type { ChapterPage } from "../../reader/types";
 import type { ChapterListResponse } from "../../chapter/types";
 import type { useInfiniteChapterList } from "../../chapter/hooks/useInfiniteChapterList";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { getChapterNavigation } from "../../../utils/getChapterNavigation";
 import type { FetchNextPageOptions } from "@tanstack/react-query";
+import type { NavigationStatus } from "../renderNavigation";
 
 type Chapter = ChapterListResponse["items"][number];
 
 // to catch the status when the infinitequeries not yet fetch the next 20 chapter for the next and previous chapter
 type PendingNavigation = "previous" | "next" | null;
 
-type NavigationStatus = 
-  | "idle"
-  | "loading"
-  | "error"
 
   type FetchNextPage =(options?:FetchNextPageOptions)=> Promise<unknown>
 
@@ -42,15 +39,15 @@ export function useChapterNavigation(
     navigate(`/manga/${mangaId}/chapter/${chapter.id}`);
   };
 
-  const goPreviousChapter = async () => {
+  const goPreviousChapter = useCallback( () => {
     if (previousChapter) {
       navigateToChapter(previousChapter);
       return;
     }
 
-    // if (isLoadingMoreChapters) {
-    //   return;
-    // }
+    if (isLoadingMoreChapters) {
+      return;
+    }
 
     if (!hasMoreChapters) {
       return;
@@ -69,15 +66,15 @@ export function useChapterNavigation(
     // const newCurrentIndex = newChapters?.findIndex(
     //   (chapter) => chapter.id === currentChapterId,
     // );
-  };
+  },[previousChapter, isLoadingMoreChapters,hasMoreChapters,navigate]);
 
-  const goNextChapter = () => {
+  const goNextChapter = useCallback(() => {
     if (!nextChapter) {
       return;
     }
 
     navigateToChapter(nextChapter);
-  };
+  },[nextChapter,navigateToChapter]);
 
   const needsMoreChapters = pendingNavigation === "previous" && !previousChapter && hasMoreChapters;
 

@@ -1,6 +1,6 @@
-type Chapter={
-    id:string;
-}
+// type Chapter={
+//     id:string;
+// }
 
 type NavigationStatus =
     | "idle"
@@ -8,8 +8,8 @@ type NavigationStatus =
     |   "error"
 
 type ReaderNavigationProps ={
-    previousChapter:Chapter|null
-    nextChapter:Chapter|null
+    // previousChapter:Chapter|null
+    // nextChapter:Chapter|null
     hasPrevious:boolean
     hasNext:boolean
     onPrevious:()=>void
@@ -18,8 +18,8 @@ type ReaderNavigationProps ={
 }
 
 function ReaderNavigation({
-    previousChapter,
-    nextChapter,
+    // previousChapter,
+    // nextChapter,
     hasPrevious,
     hasNext,
     onPrevious,

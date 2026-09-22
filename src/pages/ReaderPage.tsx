@@ -19,6 +19,7 @@ import { ReaderProgress } from "../features/readerProgress/components/ReaderProg
 import { useCallback, useEffect } from "react";
 import { useReaderData } from "../features/reader/hooks/useReaderData";
 import { useLongStripPageTracking } from "../features/reader/hooks/useLongStripPageTracking";
+import { useLongStripNavigation } from "../features/reader/hooks/useLongStripNavigation";
 
 const RENDER_AHEAD = 1;
 const PREFETCH_AHEAD = 3;
@@ -69,16 +70,17 @@ function ReaderPageContent({ mangaId, chapterId }: ReaderPageContentProps) {
     chaptersQuery.isFetchNextPageError,
   );
 
+
   const {
     currentPage,
     setCurrentPageFromTracking,
     
     // long - strip page
-    scrollToNextPage,
-    scrollToPreviousPage,
+    // scrollToNextPage,
+    // scrollToPreviousPage,
     // scrollToPage,
-    targetPage,
-    requestScrollToPage,
+    // targetPage,
+    // requestScrollToPage,
 
     // single click page
     goToNextPage,
@@ -87,6 +89,8 @@ function ReaderPageContent({ mangaId, chapterId }: ReaderPageContentProps) {
   } = useCurrentReaderPage({
     totalPages
   });
+
+  const {targetPage,scrollToNextPage,scrollToPreviousPage,requestScrollToPage} = useLongStripNavigation({currentPage,totalPages})
 
 
   const {observePage} = useLongStripPageTracking({enabled:isLongStrip,onPageChange:setCurrentPageFromTracking})
@@ -146,11 +150,11 @@ function ReaderPageContent({ mangaId, chapterId }: ReaderPageContentProps) {
           zIndex: 10,
         }}
       >
-        Current Page : {currentPage}
+        Current Page : {currentPage+1}
       </div>
       <ReaderNavigation
-        previousChapter={previousChapter}
-        nextChapter={nextChapter}
+        // previousChapter={previousChapter}
+        // nextChapter={nextChapter}
         hasPrevious={hasPrevious}
         hasNext={hasNext}
         onPrevious={goPreviousChapter}

@@ -8,12 +8,17 @@ type ReaderControls = {
 
 type UseKeyboardNavigationProps = {
   controls: ReaderControls;
+  enabled?:boolean;
 };
 
 export function useKeyboardNavigation({
   controls,
+  enabled=true,
 }: UseKeyboardNavigationProps) {
   useEffect(() => {
+    if(!enabled){
+      return
+    }
     const handlerKeyDown = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement |null;
       if(target instanceof HTMLInputElement 

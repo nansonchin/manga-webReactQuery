@@ -11,7 +11,7 @@ export function useCurrentReaderPage({totalPages}:useCurrentReaderPageProps) {
 
 
   // page that the long strip page need to jump to when the dom is not ready for the page rendering
-  const [targetPage,setTargetPage] = useState<number|null>(null);
+  // const [targetPage,setTargetPage] = useState<number|null>(null);
 
   const clampPage = useCallback((page:number)=>{
     if(totalPages<=0){
@@ -59,54 +59,54 @@ export function useCurrentReaderPage({totalPages}:useCurrentReaderPageProps) {
   // },[])
 
   
-  const requestScrollToPage = useCallback((page:number)=>{
-    if(totalPages<=0){
-      return
-    }
-    const safePage = clampPage(page)
-    setTargetPage(safePage)
-  },[clampPage,totalPages])
+  // const requestScrollToPage = useCallback((page:number)=>{
+  //   if(totalPages<=0){
+  //     return
+  //   }
+  //   const safePage = clampPage(page)
+  //   setTargetPage(safePage)
+  // },[clampPage,totalPages])
 
-  useEffect(()=>{
-    if(targetPage === null){
-      return;
-    }
+  // useEffect(()=>{
+  //   if(targetPage === null){
+  //     return;
+  //   }
 
-    const element = document.querySelector(
-      `[data-page="${targetPage+1}"]`
-    )
+  //   const element = document.querySelector(
+  //     `[data-page="${targetPage+1}"]`
+  //   )
 
-    if(!element){
-      return;
-    }
+  //   if(!element){
+  //     return;
+  //   }
 
-    element.scrollIntoView({
+  //   element.scrollIntoView({
 
-      behavior:"smooth",
-      block:"start"
-    })
+  //     behavior:"smooth",
+  //     block:"start"
+  //   })
 
-    setTargetPage(null)
-  },[targetPage])
+  //   setTargetPage(null)
+  // },[targetPage])
 
-  const scrollToNextPage = useCallback(()=>{
-    if(totalPages<=0){
-      return
-    }
-    if(currentPage>=totalPages-1){
-      return;
-    }
+  // const scrollToNextPage = useCallback(()=>{
+  //   if(totalPages<=0){
+  //     return
+  //   }
+  //   if(currentPage>=totalPages-1){
+  //     return;
+  //   }
 
-    requestScrollToPage(currentPage+1)
-  },[currentPage,requestScrollToPage])
+  //   requestScrollToPage(currentPage+1)
+  // },[currentPage,requestScrollToPage])
 
-  const scrollToPreviousPage = useCallback(()=>{
-    if(currentPage<=0){
-      return
-    };
+  // const scrollToPreviousPage = useCallback(()=>{
+  //   if(currentPage<=0){
+  //     return
+  //   };
 
-    requestScrollToPage(currentPage-1)
-  },[currentPage,requestScrollToPage])
+  //   requestScrollToPage(currentPage-1)
+  // },[currentPage,requestScrollToPage])
 
 
   // single page
@@ -145,11 +145,11 @@ export function useCurrentReaderPage({totalPages}:useCurrentReaderPageProps) {
     setCurrentPageFromTracking,
     // observePage,
     // long strip page
-    targetPage,
-    scrollToNextPage,
-    scrollToPreviousPage,
+    // targetPage,
+    // scrollToNextPage,
+    // scrollToPreviousPage,
     // scrollToPage,
-    requestScrollToPage,
+    // requestScrollToPage,
 
     // clicke /tap single page
     goToNextPage,
