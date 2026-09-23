@@ -25,7 +25,7 @@ export function useLongStripNavigation ({
         }
 
         const safePage = clamPage(page)
-        if(!safePage){
+        if(safePage === undefined){
             return
         }
         setTargetPage(safePage)
