@@ -102,30 +102,30 @@ function ReaderPageContent({ mangaId, chapterId }: ReaderPageContentProps) {
   })
 
 
-  const hasAppliedRestoredPageRef = useRef(false)
+  // const hasAppliedRestoredPageRef = useRef(false)
 
-  useEffect(()=>{
-    if(!hasRestored){
-      return;
-    }
+  // useEffect(()=>{
+  //   if(!hasRestored){
+  //     return;
+  //   }
 
-    if(restorePage===null){
-      hasAppliedRestoredPageRef.current=true
-      return
-    }
+  //   if(restorePage===null){
+  //     hasAppliedRestoredPageRef.current=true
+  //     return
+  //   }
 
-    if(hasAppliedRestoredPageRef.current){
-      return
-    }
+  //   if(hasAppliedRestoredPageRef.current){
+  //     return
+  //   }
 
-    if(!restoredPage){
-      return
-    }
+  //   if(!restoredPage){
+  //     return
+  //   }
 
-    restorePage(restoredPage)
-    hasAppliedRestoredPageRef.current=true
+  //   restorePage(restoredPage)
+  //   hasAppliedRestoredPageRef.current=true
 
-  },[hasRestored,restorePage,restorePage])
+  // },[hasRestored,restorePage,restoredPage])
 
   const {
     targetPage,
@@ -146,7 +146,7 @@ function ReaderPageContent({ mangaId, chapterId }: ReaderPageContentProps) {
   const previousPage = isLongStrip ? scrollToPreviousPage : goToPreviousPage;
 
   const goToReaderPage = isLongStrip ? requestScrollToPage : goToPage;
-  
+
   useReaderRestorePosition({restoredPage,hasRestored,isLongStrip,restorePage,requestScrollToPage})
 
 

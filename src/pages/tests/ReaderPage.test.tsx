@@ -460,7 +460,7 @@ describe("ReaderPage", () => {
     )
 
     renderReaderPage()
-    expect(screen.getByText("Current Page : 2")).toBeInTheDocument()
+    expect(await screen.findByText("Current Page : 2")).toBeInTheDocument()
   })
 
   it("does not restore progress from another chapter",()=>{
@@ -507,7 +507,7 @@ describe("ReaderPage", () => {
         isError:false,
         error:null,
       },
-      chapterQuery:{
+      chaptersQuery:{
         hasNextPage:false,
         fetchNextPage:vi.fn(),
         isFetchingNextPage:false,

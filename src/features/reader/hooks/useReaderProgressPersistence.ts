@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type ReaderProgressKey ={
     mangaId:string;
@@ -104,13 +104,16 @@ export function useReaderProgressPersistence({
     totalPages:number;
     enabled?:boolean
 }){
-    const hasRestoredRef = useRef(false)
+    // const hasRestoredRef = useRef(false)
 
-    const restoredPageRef = useRef<number|null>(null)
+    // const restoredPageRef = useRef<number|null>(null)    
 
+    const [restoredPage, setRestoredPage] = useState<number|null>(null)
+
+    const [hasRestored,setHasRestored] = useState(false)
     useEffect(()=>{
-        hasRestoredRef.current=false;
-        restoredPageRef.current=null
+        setRestoredPage(null);
+        setHasRestored(false)
     },[mangaId, chapterId])
 
     useEffect(()=>{
@@ -118,7 +121,7 @@ export function useReaderProgressPersistence({
             return;
         }
 
-        if(hasRestoredRef.current){
+        if(hasRestored){
             return;
         }
 
@@ -132,7 +135,8 @@ export function useReaderProgressPersistence({
         })
 
         if(savedPage === null){
-            hasRestoredRef.current = true
+            setRestoredPage(null)
+            setHasRestored(true)
             return;
         }
 
@@ -141,8 +145,10 @@ export function useReaderProgressPersistence({
             totalPages-1
         )
 
-        restoredPageRef.current = safePage;
-        hasRestoredRef.current=true
+        // restoredPageRef.current = safePage;
+        // hasRestoredRef.current=true
+        setRestoredPage(safePage)
+        setHasRestored(true)
     },[
         mangaId,
         chapterId,
@@ -155,7 +161,7 @@ export function useReaderProgressPersistence({
             return
         }
 
-        if(!hasRestoredRef.current){
+        if(!hasRestored){
             return;
         }
 
@@ -174,7 +180,7 @@ export function useReaderProgressPersistence({
     },[mangaId,chapterId,currentPage,totalPages,enabled])
 
     return{
-        restoredPage:restoredPageRef.current,
-        hasRestored:hasRestoredRef.current
+        restoredPage,
+        hasRestored
     }
 }
