@@ -32,7 +32,7 @@ export function useLongStripNavigation ({
     },[clamPage,totalPages])
 
     useEffect(()=>{
-        if(targetPage === null || !targetPage){
+        if(targetPage === null ){
             return
         }
 

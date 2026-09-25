@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import ReaderPage from "../ReaderPage";
 
@@ -165,6 +165,12 @@ function getSinglePageReader() {
 }
 
 describe("ReaderPage", () => {
+
+  beforeEach(()=>{
+    vi.clearAllMocks()
+    localStorage.clear()
+    setupMocks()
+  })
 
   it("renders the first page initially", () => {
     setupMocks();
@@ -438,4 +444,77 @@ describe("ReaderPage", () => {
 
     expect(screen.getByText("Invalid Reader Url")).toBeInTheDocument();
   });
+
+  it("restores the saved reading progress for the same manga and chapter",async()=>{
+    localStorage.setItem(
+
+      "manga-reader-progress",
+      JSON.stringify([
+        {
+          mangaId:"manga-1",
+          chapterId:"chapter-1",
+          page:1,
+          updatedAt:Date.now()
+        }
+      ])
+    )
+
+    renderReaderPage()
+    expect(screen.getByText("Current Page : 2")).toBeInTheDocument()
+  })
+
+  it("does not restore progress from another chapter",()=>{
+    localStorage.setItem("manga-reader-progress",JSON.stringify([{
+      mangaId:"manga-1",
+      chapterId:"chapter-999",
+      page:1,
+      updatedAt:Date.now()
+    }]))
+
+    renderReaderPage()
+
+    expect(screen.getByText("Current Page : 1")).toBeInTheDocument()
+  })
+
+  it("does not restore preogress from another manga",()=>{
+    localStorage.setItem(
+      "manga-reader-progress",
+      JSON.stringify([{
+        mangaId:"manga-999",
+        chapterId:"chapter-1",
+        page:1,
+        updatedAt:Date.now()
+      }])
+    )
+    renderReaderPage()
+
+    expect(screen.getByText("Current Page : 1"),).toBeInTheDocument()
+  })
+
+  it("waits until chapter pages are loaded before restoring progress", async()=>{
+    localStorage.setItem("manga-reader-progress",JSON.stringify([{
+      mangaId:"manga-1",
+      chapterId:"chapter-1",
+      page:1,
+      updatedAt:Date.now()
+    }]))
+
+    mocks.useReaderData.mockReturnValue({
+      pages:[],
+      chapters:[],
+      pagesQuery:{
+        isPending:true,
+        isError:false,
+        error:null,
+      },
+      chapterQuery:{
+        hasNextPage:false,
+        fetchNextPage:vi.fn(),
+        isFetchingNextPage:false,
+        isFetchingNextPageError:false
+      }
+    })
+    renderReaderPage()
+    expect(screen.getByText("Loading pages ...")).toBeInTheDocument()
+  })
 });

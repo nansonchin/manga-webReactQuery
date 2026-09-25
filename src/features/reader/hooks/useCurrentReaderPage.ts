@@ -40,6 +40,22 @@ export function useCurrentReaderPage({totalPages}:useCurrentReaderPageProps) {
 
     setCurrentPage(page)
   },[totalPages])
+
+  const restorePage = useCallback((page:number)=>{
+    if(!Number.isInteger(page)){
+      return;
+    }
+
+    if(totalPages<=0){
+      return;
+    }
+
+    if(page<0 || page>=totalPages){
+      return
+
+    }
+    setCurrentPage(page)
+  },[totalPages])
   
 
   //long - strip page
@@ -143,6 +159,7 @@ export function useCurrentReaderPage({totalPages}:useCurrentReaderPageProps) {
   return {
     currentPage,
     setCurrentPageFromTracking,
+    restorePage,
     // observePage,
     // long strip page
     // targetPage,

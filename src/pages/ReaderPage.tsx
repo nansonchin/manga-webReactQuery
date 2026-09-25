@@ -16,10 +16,12 @@ import ReaderSettingsPanel from "../features/readerSetting/components/ReaderSett
 import LongStripReader from "../features/reader/components/LongStripReader/LongStripReader";
 import SinglePageReader from "../features/reader/components/SinglePageReader/SinglePageReader";
 import { ReaderProgress } from "../features/readerProgress/components/ReaderProgress";
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { useReaderData } from "../features/reader/hooks/useReaderData";
 import { useLongStripPageTracking } from "../features/reader/hooks/useLongStripPageTracking";
 import { useLongStripNavigation } from "../features/reader/hooks/useLongStripNavigation";
+import { useReaderProgressPersistence } from "../features/reader/hooks/useReaderProgressPersistence";
+import { useReaderRestorePosition } from "../features/reader/hooks/useReaderRestorePosition";
 
 const RENDER_AHEAD = 1;
 const PREFETCH_AHEAD = 3;
@@ -76,7 +78,7 @@ function ReaderPageContent({ mangaId, chapterId }: ReaderPageContentProps) {
   const {
     currentPage,
     setCurrentPageFromTracking,
-
+    restorePage,
     // long - strip page
     // scrollToNextPage,
     // scrollToPreviousPage,
@@ -91,6 +93,39 @@ function ReaderPageContent({ mangaId, chapterId }: ReaderPageContentProps) {
   } = useCurrentReaderPage({
     totalPages,
   });
+
+  const {restoredPage, hasRestored} = useReaderProgressPersistence({
+    mangaId,
+    chapterId,
+    currentPage,
+    totalPages
+  })
+
+
+  const hasAppliedRestoredPageRef = useRef(false)
+
+  useEffect(()=>{
+    if(!hasRestored){
+      return;
+    }
+
+    if(restorePage===null){
+      hasAppliedRestoredPageRef.current=true
+      return
+    }
+
+    if(hasAppliedRestoredPageRef.current){
+      return
+    }
+
+    if(!restoredPage){
+      return
+    }
+
+    restorePage(restoredPage)
+    hasAppliedRestoredPageRef.current=true
+
+  },[hasRestored,restorePage,restorePage])
 
   const {
     targetPage,
@@ -111,6 +146,9 @@ function ReaderPageContent({ mangaId, chapterId }: ReaderPageContentProps) {
   const previousPage = isLongStrip ? scrollToPreviousPage : goToPreviousPage;
 
   const goToReaderPage = isLongStrip ? requestScrollToPage : goToPage;
+  
+  useReaderRestorePosition({restoredPage,hasRestored,isLongStrip,restorePage,requestScrollToPage})
+
 
   const controls = useReaderControls({
     currentPage,
