@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { useLazyImage } from "../../hooks/useLazyImage";
-import "./ReaderImage.scss"
+import "./ReaderImage.scss";
 
 type ReaderImageProps = {
   src: string;
   alt: string;
-  shouldLoad:boolean;
+  shouldLoad: boolean;
 };
 
 function ReaderImage({ src, alt, shouldLoad }: ReaderImageProps) {
@@ -15,14 +15,19 @@ function ReaderImage({ src, alt, shouldLoad }: ReaderImageProps) {
   // const { ref, visible } = useLazyImage();
 
   if (error) {
-    return <div className="reader-image-error">Failed to load Image</div>;
+    return (
+      <div className="reader-image-error" role="alert">
+        Failed to load Image
+      </div>
+    );
   }
 
   return (
     <div className="reader-image">
-      {shouldLoad && !loaded && <div className="reader-image-skeleton" />}
       <div className="reader-image-wrapper">
-        {shouldLoad ? (
+        {!shouldLoad && <div className="reader-placeholder" />}
+        {shouldLoad && !loaded && <div className="reader-image-skeleton" />}
+        {shouldLoad && (
           <img
             src={src}
             alt={alt}
@@ -32,9 +37,6 @@ function ReaderImage({ src, alt, shouldLoad }: ReaderImageProps) {
             onLoad={() => setLoaded(true)}
             onError={() => setError(true)}
           />
-        ):(
-          <div className="reader-placeholder">
-            </div>
         )}
       </div>
     </div>

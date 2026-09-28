@@ -226,4 +226,29 @@ it("navigates to next chapter when  it is already loaded",()=>{
 
     expect(fetchNextPage).not.toHaveBeenCalled()
 })
+
+it("does not navigate when there is no  next chapter  ",()=>{
+    const fetchNextPage = vi.fn()
+
+    const loadedChapters = [
+        chapters[0], // eg: chapter 10
+        chapters[1] //eg: chapter 9
+    ];
+
+    const {result} = renderHook(()=> useChapterNavigation({
+        chapters:loadedChapters,
+        mangaId:"manga-1",
+        currentChapterId:"10",
+        hasMoreChapters:true,
+        fetchNextPage,
+        isLoadingMoreChapters:false,
+        isFetchNextPageError:false,
+    }))
+
+    act(()=>{
+        result.current.goNextChapter()
+    })
+
+    expect(navigateMock).not.toHaveBeenCalled()
+})
 });
