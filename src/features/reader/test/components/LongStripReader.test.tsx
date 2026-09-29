@@ -1,15 +1,18 @@
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  should,
-  vi,
-} from "vitest";
-import LongStripReader from "../../components/LongStripReader/LongStripReader";
+import { describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 
+import LongStripReader from "../../components/LongStripReader/LongStripReader";
+
+import { useLongStripVirtualizer } from "../../hooks/useLongStripVirtualizer";
+
+/**
+ * Mock ReaderImage
+ *
+ * 我们在 LongStripReader test 中，
+ * 不需要真的测试图片加载。
+ *
+ * ReaderImage 自己应该有另外的测试文件。
+ */
 vi.mock("../../components/ReaderImage/ReaderImage", () => ({
   default: ({
     src,
@@ -22,11 +25,28 @@ vi.mock("../../components/ReaderImage/ReaderImage", () => ({
   }) => <img src={src} alt={alt} data-should-load={String(shouldLoad)} />,
 }));
 
+/**
+ * Mock LongStripVirtualizer
+ *
+ * 这里是整个测试最重要的部分。
+ *
+ * 我们不测试 TanStack Virtual 本身。
+ * 我们假设 virtualizer 已经正确告诉 component：
+ *
+ * "现在需要渲染 page 0, 1, 2..."
+ */
+vi.mock("../../hooks/useLongStripVirtualizer", () => ({
+  useLongStripVirtualizer: vi.fn(),
+}));
+
 type ReaderPageData = {
   index: number;
   url: string;
 };
 
+/**
+ * 建立测试 pages
+ */
 function createPages(count: number): ReaderPageData[] {
   return Array.from({ length: count }, (_, index) => ({
     index,
@@ -34,65 +54,63 @@ function createPages(count: number): ReaderPageData[] {
   }));
 }
 
-function mockLayout() {
-  vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(
-    function () {
-      if (this.classList.contains("reader-long-strip")) {
-        return {
-          width: 800,
-          height: 800,
-          top: 0,
-          left: 0,
-          right: 800,
-          bottom: 800,
-          x: 0,
-          y: 0,
-          toJSON: () => {},
-        };
-      }
-      return {
-        width: 800,
-        height: 800,
-        top: 0,
-        left: 0,
-        right: 800,
-        bottom: 800,
-        x: 0,
-        y: 0,
-        toJSON: () => {},
-      };
-    },
-  );
-  Object.defineProperty(HTMLElement.prototype, "clientHeight", {
-    configurable: true,
-    value: 800,
-  });
-  Object.defineProperty(HTMLElement.prototype, "clientWidth", {
-    configurable: true,
-    value: 800,
-  });
-  Object.defineProperty(HTMLElement.prototype, "scrollHeight", {
-    configurable: true,
-    value: 80000,
-  });
-  Object.defineProperty(HTMLElement.prototype, "scrollWidth", {
-    configurable: true,
-    value: 800,
-  });
+/**
+ * 建立 fake virtual items
+ *
+ * 例如：
+ *
+ * page 0
+ * page 1
+ * page 2
+ * page 3
+ *
+ * 每个 page 假设高度 800px。
+ */
+function createVirtualItems(count: number, size = 800) {
+  return Array.from({ length: count }, (_, index) => ({
+    index,
+    key: index,
+    start: index * size,
+    end: (index + 1) * size,
+    size,
+    lane: 0,
+  }));
 }
 
-describe("Long StripReader", () => {
-  beforeEach(() => {
-    mockLayout();
-  });
+/**
+ * 建立 fake virtualizer
+ */
+function createMockVirtualizer(
+  virtualItems: ReturnType<typeof createVirtualItems>,
+  totalSize = virtualItems.length * 800,
+) {
+  return {
+    getVirtualItems: vi.fn(() => virtualItems),
 
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
+    getTotalSize: vi.fn(() => totalSize),
 
-  it("reders the first page", () => {
+    measureElement: vi.fn(),
+
+    scrollToIndex: vi.fn(),
+
+    scrollToOffset: vi.fn(),
+  };
+}
+
+describe("LongStripReader", () => {
+  it("renders virtualized pages", () => {
     const pages = createPages(100);
-    const oberservePage = vi.fn();
+
+    const virtualItems = createVirtualItems(5);
+
+    const mockVirtualizer = createMockVirtualizer(virtualItems);
+
+    vi.mocked(useLongStripVirtualizer).mockReturnValue({
+      parentRef: { current: null },
+      virtualizer: mockVirtualizer as any,
+    });
+
+    const observePage = vi.fn();
 
     render(
       <LongStripReader
@@ -100,14 +118,63 @@ describe("Long StripReader", () => {
         currentPage={0}
         renderAhead={2}
         targetPage={null}
-        observePage={oberservePage}
+        observePage={observePage}
       />,
     );
+
     expect(screen.getByAltText("Page 1")).toBeInTheDocument();
+
+    expect(screen.getByAltText("Page 2")).toBeInTheDocument();
+
+    expect(screen.getByAltText("Page 5")).toBeInTheDocument();
   });
 
-  it("does not render every page into the DOM", () => {
+  it("does not render pages outside the virtualized range", () => {
     const pages = createPages(100);
+
+    /**
+     * Virtualizer 只告诉 component：
+     *
+     * page 0 ~ page 4
+     *
+     * 所以 page 50 不应该出现在 DOM。
+     */
+    const virtualItems = createVirtualItems(5);
+
+    const mockVirtualizer = createMockVirtualizer(virtualItems);
+
+    vi.mocked(useLongStripVirtualizer).mockReturnValue({
+      parentRef: { current: null },
+      virtualizer: mockVirtualizer as any,
+    });
+
+    const observePage = vi.fn();
+
+    render(
+      <LongStripReader
+        pages={pages}
+        currentPage={0}
+        renderAhead={2}
+        targetPage={null}
+        observePage={observePage}
+      />,
+    );
+
+    expect(screen.queryByAltText("Page 50")).not.toBeInTheDocument();
+  });
+
+  it("renders fewer DOM pages than total pages", () => {
+    const pages = createPages(100);
+
+    const virtualItems = createVirtualItems(5);
+
+    const mockVirtualizer = createMockVirtualizer(virtualItems);
+
+    vi.mocked(useLongStripVirtualizer).mockReturnValue({
+      parentRef: { current: null },
+      virtualizer: mockVirtualizer as any,
+    });
+
     const observePage = vi.fn();
 
     render(
@@ -125,24 +192,30 @@ describe("Long StripReader", () => {
     expect(images.length).toBeLessThan(pages.length);
   });
 
-  it("does not initially render a far-away page", () => {
-    const pages = createPages(100);
-    const observePage = vi.fn();
-
-    render(
-      <LongStripReader
-        pages={pages}
-        currentPage={0}
-        renderAhead={2}
-        targetPage={null}
-        observePage={observePage}
-      />,
-    );
-    expect(screen.getByAltText("Page 50")).not.toBeInTheDocument();
-  });
-
-  it("loads pages near the current page", () => {
+  it("loads pages near currentPage", () => {
     const pages = createPages(10);
+
+    /**
+     * currentPage = 1
+     * renderAhead = 1
+     *
+     * 所以：
+     *
+     * page 0 -> true
+     * page 1 -> true
+     * page 2 -> true
+     *
+     * page 3 -> false
+     */
+    const virtualItems = createVirtualItems(4);
+
+    const mockVirtualizer = createMockVirtualizer(virtualItems);
+
+    vi.mocked(useLongStripVirtualizer).mockReturnValue({
+      parentRef: { current: null },
+      virtualizer: mockVirtualizer as any,
+    });
+
     const observePage = vi.fn();
 
     render(
@@ -154,18 +227,42 @@ describe("Long StripReader", () => {
         observePage={observePage}
       />,
     );
-    const page1 = screen.getAllByAltText("Page 1");
-    const page2 = screen.getAllByAltText("Page 2");
-    const page3 = screen.getAllByAltText("Page 3");
 
-    expect(page1).toHaveAttribute("data-should-load", "true");
-    expect(page2).toHaveAttribute("data-should-load", "true");
-    expect(page3).toHaveAttribute("data-should-load", "true");
+    expect(screen.getByAltText("Page 1")).toHaveAttribute(
+      "data-should-load",
+      "true",
+    );
+
+    expect(screen.getByAltText("Page 2")).toHaveAttribute(
+      "data-should-load",
+      "true",
+    );
+
+    expect(screen.getByAltText("Page 3")).toHaveAttribute(
+      "data-should-load",
+      "true",
+    );
+
+    expect(screen.getByAltText("Page 4")).toHaveAttribute(
+      "data-should-load",
+      "false",
+    );
   });
 
-  it("does no load a rendered page outside renderAhead", () => {
+  it("does not load rendered page outside renderAhead", () => {
     const pages = createPages(10);
+
+    const virtualItems = createVirtualItems(5);
+
+    const mockVirtualizer = createMockVirtualizer(virtualItems);
+
+    vi.mocked(useLongStripVirtualizer).mockReturnValue({
+      parentRef: { current: null },
+      virtualizer: mockVirtualizer as any,
+    });
+
     const observePage = vi.fn();
+
     render(
       <LongStripReader
         pages={pages}
@@ -176,34 +273,73 @@ describe("Long StripReader", () => {
       />,
     );
 
-    const page3 = screen.queryByAltText("Page 3");
+    expect(screen.getByAltText("Page 1")).toHaveAttribute(
+      "data-should-load",
+      "true",
+    );
 
-    if (page3) {
-      expect(page3).toHaveAttribute("data-should-load", "false");
-    }
+    expect(screen.getByAltText("Page 2")).toHaveAttribute(
+      "data-should-load",
+      "true",
+    );
+
+    expect(screen.getByAltText("Page 3")).toHaveAttribute(
+      "data-should-load",
+      "false",
+    );
   });
 
-  it("loads  targetPage when targetPage is rendered", () => {
+  it("loads targetPage even when it is outside renderAhead", () => {
     const pages = createPages(10);
+
+    /**
+     * currentPage = 0
+     * renderAhead = 1
+     *
+     * targetPage = 3
+     *
+     * page 4 虽然距离 currentPage 很远，
+     * 但是因为是 targetPage，
+     * 所以 shouldLoad 必须是 true。
+     */
+    const virtualItems = createVirtualItems(5);
+
+    const mockVirtualizer = createMockVirtualizer(virtualItems);
+
+    vi.mocked(useLongStripVirtualizer).mockReturnValue({
+      parentRef: { current: null },
+      virtualizer: mockVirtualizer as any,
+    });
+
     const observePage = vi.fn();
+
     render(
       <LongStripReader
         pages={pages}
-        currentPage={1}
+        currentPage={0}
         renderAhead={1}
         targetPage={3}
         observePage={observePage}
       />,
     );
-    const targetPage = screen.queryAllByAltText("Page 4");
 
-    if (targetPage) {
-      expect(targetPage).toHaveAttribute("data-should-load", "true");
-    }
+    const targetPage = screen.getByAltText("Page 4");
+
+    expect(targetPage).toHaveAttribute("data-should-load", "true");
   });
 
-  it("passes mounted page elements to observePage", () => {
+  it("calls observePage for mounted page elements", () => {
     const pages = createPages(100);
+
+    const virtualItems = createVirtualItems(5);
+
+    const mockVirtualizer = createMockVirtualizer(virtualItems);
+
+    vi.mocked(useLongStripVirtualizer).mockReturnValue({
+      parentRef: { current: null },
+      virtualizer: mockVirtualizer as any,
+    });
+
     const observePage = vi.fn();
 
     render(
@@ -217,27 +353,92 @@ describe("Long StripReader", () => {
     );
 
     expect(observePage).toHaveBeenCalled();
+
     expect(observePage.mock.calls.length).toBeLessThan(pages.length);
 
     for (const [element] of observePage.mock.calls) {
       expect(element).toBeInstanceOf(HTMLDivElement);
+
       expect(element.dataset.page).toBeDefined();
     }
   });
-  it("sets the correct data-page value",()=>{
-    const pages = createPages(10)
-    const observePage= vi.fn()
-    render(<LongStripReader pages={pages} currentPage={0} renderAhead={2} targetPage={null} observePage={observePage}/>)
-    
-    const renderedImages=screen.getAllByRole("img")
 
-    for(const image of renderedImages){
-        const pageWrapper = image.parentElement?.parentElement
-        expect(pageWrapper).toBeInTheDocument();
+  it("sets the correct data-page value", () => {
+    const pages = createPages(10);
 
-        const pageNumber=Number(image.getAttribute("alt")?.replace("Page",""))
+    const virtualItems = createVirtualItems(5);
 
-        expect(pageWrapper).toHaveAttribute("data-page",String(pageNumber))
+    const mockVirtualizer = createMockVirtualizer(virtualItems);
+
+    vi.mocked(useLongStripVirtualizer).mockReturnValue({
+      parentRef: { current: null },
+      virtualizer: mockVirtualizer as any,
+    });
+
+    const observePage = vi.fn();
+
+    render(
+      <LongStripReader
+        pages={pages}
+        currentPage={0}
+        renderAhead={2}
+        targetPage={null}
+        observePage={observePage}
+      />,
+    );
+
+    const renderedImages = screen.getAllByRole("img");
+
+    for (const image of renderedImages) {
+      const pageWrapper = image.parentElement;
+
+      /**
+       * Mock ReaderImage：
+       *
+       * <div data-page="1">
+       *   <img />
+       * </div>
+       *
+       * 所以 img.parentElement 就是 page wrapper。
+       */
+      expect(pageWrapper).toBeInTheDocument();
+
+      const pageNumber = Number(
+        image.getAttribute("alt")?.replace("Page ", ""),
+      );
+
+      expect(pageWrapper).toHaveAttribute("data-page", String(pageNumber));
     }
-})
+  });
+
+  it("calls measureElement for mounted pages", () => {
+    const pages = createPages(10);
+
+    const virtualItems = createVirtualItems(5);
+
+    const mockVirtualizer = createMockVirtualizer(virtualItems);
+
+    vi.mocked(useLongStripVirtualizer).mockReturnValue({
+      parentRef: { current: null },
+      virtualizer: mockVirtualizer as any,
+    });
+
+    const observePage = vi.fn();
+
+    render(
+      <LongStripReader
+        pages={pages}
+        currentPage={0}
+        renderAhead={2}
+        targetPage={null}
+        observePage={observePage}
+      />,
+    );
+
+    expect(mockVirtualizer.measureElement).toHaveBeenCalled();
+
+    expect(mockVirtualizer.measureElement).toHaveBeenCalledTimes(
+      virtualItems.length,
+    );
+  });
 });
