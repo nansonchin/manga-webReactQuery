@@ -44,7 +44,7 @@ function LongStripReader({
           width: "100%",
           position: "relative",
         }}
-      ></div>
+      >
       {virtualItems.map((virtualItem) => {
         // const shouldLoad = page.index <= renderFromPage + renderAhead;
         const page = pages[virtualItem.index];
@@ -87,6 +87,7 @@ function LongStripReader({
           </div>
         );
       })}
+      </div>
     </div>
   );
 }

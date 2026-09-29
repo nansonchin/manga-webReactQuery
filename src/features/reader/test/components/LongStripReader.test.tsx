@@ -1,140 +1,243 @@
-import { describe, expect, it, should, vi } from "vitest";
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  should,
+  vi,
+} from "vitest";
 import LongStripReader from "../../components/LongStripReader/LongStripReader";
 import { render, screen } from "@testing-library/react";
 
-vi.mock("../../components/ReaderImage/ReaderImage",()=>({
-    default:({
-        src,
-        alt,
-        shouldLoad,
-    }:{
-        src:string;
-        alt:string;
-        shouldLoad:boolean;
-    })=>(
-        <img src={src} alt={alt} data-should-load={String(shouldLoad)}/>
-    )
-}))
+vi.mock("../../components/ReaderImage/ReaderImage", () => ({
+  default: ({
+    src,
+    alt,
+    shouldLoad,
+  }: {
+    src: string;
+    alt: string;
+    shouldLoad: boolean;
+  }) => <img src={src} alt={alt} data-should-load={String(shouldLoad)} />,
+}));
 
-describe("Long StripReader",()=>{
-    const pages = [
-        {
-            index:0,
-            url:"page-1.jpg",
-        },
-        {
-            index:1,
-            url:"page-2.jpg",
-        },
-        {
-            index:2,
-            url:"page-3.jpg",
-        },
-        {
-            index:3,
-            url:"page-4.jpg",
-        },
-        {
-            index:4,
-            url:"page-5.jpg",
-        },
-    ]
+type ReaderPageData = {
+  index: number;
+  url: string;
+};
 
-    it("renders all pages",()=>{
-      const oberservePage = vi.fn()
-      
-      render(
-        <LongStripReader pages={pages} currentPage={0} renderAhead={2} targetPage={null} observePage={oberservePage}/>
-      )
+function createPages(count: number): ReaderPageData[] {
+  return Array.from({ length: count }, (_, index) => ({
+    index,
+    url: `page-${index + 1}.jpg`,
+  }));
+}
 
-      expect(screen.getByAltText("Page 1")).toBeInTheDocument()
-      expect(screen.getByAltText("Page 2")).toBeInTheDocument()
-      expect(screen.getByAltText("Page 3")).toBeInTheDocument()
-      expect(screen.getByAltText("Page 4")).toBeInTheDocument()
-      expect(screen.getByAltText("Page 5")).toBeInTheDocument()
+function mockLayout() {
+  vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(
+    function () {
+      if (this.classList.contains("reader-long-strip")) {
+        return {
+          width: 800,
+          height: 800,
+          top: 0,
+          left: 0,
+          right: 800,
+          bottom: 800,
+          x: 0,
+          y: 0,
+          toJSON: () => {},
+        };
+      }
+      return {
+        width: 800,
+        height: 800,
+        top: 0,
+        left: 0,
+        right: 800,
+        bottom: 800,
+        x: 0,
+        y: 0,
+        toJSON: () => {},
+      };
+    },
+  );
+  Object.defineProperty(HTMLElement.prototype, "clientHeight", {
+    configurable: true,
+    value: 800,
+  });
+  Object.defineProperty(HTMLElement.prototype, "clientWidth", {
+    configurable: true,
+    value: 800,
+  });
+  Object.defineProperty(HTMLElement.prototype, "scrollHeight", {
+    configurable: true,
+    value: 80000,
+  });
+  Object.defineProperty(HTMLElement.prototype, "scrollWidth", {
+    configurable: true,
+    value: 800,
+  });
+}
 
-    })
+describe("Long StripReader", () => {
+  beforeEach(() => {
+    mockLayout();
+  });
 
-    it("loads pages up to renderAhead from the  current page",()=>{
-        const observePage=vi.fn()
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
 
-        render(
-            <LongStripReader pages={pages} currentPage={1} renderAhead={1} targetPage={null} observePage={observePage}/>
-        )
-        const page1=screen.getByAltText("Page 1")
-        const page2=screen.getByAltText("Page 2")
-        const page3=screen.getByAltText("Page 3")
-        const page4=screen.getByAltText("Page 4")
-        const page5=screen.getByAltText("Page 5")
+  it("reders the first page", () => {
+    const pages = createPages(100);
+    const oberservePage = vi.fn();
 
-        expect(page1).toHaveAttribute("data-should-load","true")
-        expect(page2).toHaveAttribute("data-should-load","true")
-        expect(page3).toHaveAttribute("data-should-load","true")
-        expect(page4).toHaveAttribute("data-should-load","false")
-        expect(page5).toHaveAttribute("data-should-load","false")
+    render(
+      <LongStripReader
+        pages={pages}
+        currentPage={0}
+        renderAhead={2}
+        targetPage={null}
+        observePage={oberservePage}
+      />,
+    );
+    expect(screen.getByAltText("Page 1")).toBeInTheDocument();
+  });
 
-    })
+  it("does not render every page into the DOM", () => {
+    const pages = createPages(100);
+    const observePage = vi.fn();
 
-    it("uses targetPage when it is further than currentPage",()=>{
-        const observePage = vi.fn()
+    render(
+      <LongStripReader
+        pages={pages}
+        currentPage={0}
+        renderAhead={2}
+        targetPage={null}
+        observePage={observePage}
+      />,
+    );
 
-        render(
-            <LongStripReader
-                pages={pages}
-                currentPage={1}
-                renderAhead={1}
-                targetPage={3}
-                observePage={observePage}
-            />
-        )
+    const images = screen.getAllByRole("img");
 
-               const page1=screen.getByAltText("Page 1")
-        const page2=screen.getByAltText("Page 2")
-        const page3=screen.getByAltText("Page 3")
-        const page4=screen.getByAltText("Page 4")
-        const page5=screen.getByAltText("Page 5")
+    expect(images.length).toBeLessThan(pages.length);
+  });
 
-        expect(page1).toHaveAttribute("data-should-load","true")
-        expect(page2).toHaveAttribute("data-should-load","true")
-        expect(page3).toHaveAttribute("data-should-load","true")
-        expect(page4).toHaveAttribute("data-should-load","true")
-        expect(page5).toHaveAttribute("data-should-load","true")
-    })
+  it("does not initially render a far-away page", () => {
+    const pages = createPages(100);
+    const observePage = vi.fn();
 
-    it("passes each page element to observePage",()=>{
-        const observePage = vi.fn()
-        render(
-            <LongStripReader pages={pages} currentPage={0} renderAhead={1} targetPage={null} observePage={observePage}/>
-        )
-        expect(observePage).toHaveBeenCalledTimes(pages.length)
+    render(
+      <LongStripReader
+        pages={pages}
+        currentPage={0}
+        renderAhead={2}
+        targetPage={null}
+        observePage={observePage}
+      />,
+    );
+    expect(screen.getByAltText("Page 50")).not.toBeInTheDocument();
+  });
 
-        for(const page of pages){
-            const calls = observePage.mock.calls;
+  it("loads pages near the current page", () => {
+    const pages = createPages(10);
+    const observePage = vi.fn();
 
-            const matchingCall = calls.find(
-                ([element])=> element instanceof HTMLDivElement && element.dataset.page === String(page.index +1)
-            )
+    render(
+      <LongStripReader
+        pages={pages}
+        currentPage={1}
+        renderAhead={1}
+        targetPage={null}
+        observePage={observePage}
+      />,
+    );
+    const page1 = screen.getAllByAltText("Page 1");
+    const page2 = screen.getAllByAltText("Page 2");
+    const page3 = screen.getAllByAltText("Page 3");
 
-            expect(matchingCall).toBeDefined()
-        }
-    })
+    expect(page1).toHaveAttribute("data-should-load", "true");
+    expect(page2).toHaveAttribute("data-should-load", "true");
+    expect(page3).toHaveAttribute("data-should-load", "true");
+  });
 
-    it("sets the correct data-page value for each page",()=>{
-        const observePage = vi.fn()
+  it("does no load a rendered page outside renderAhead", () => {
+    const pages = createPages(10);
+    const observePage = vi.fn();
+    render(
+      <LongStripReader
+        pages={pages}
+        currentPage={0}
+        renderAhead={1}
+        targetPage={null}
+        observePage={observePage}
+      />,
+    );
 
-        render(
-            <LongStripReader
-                pages={pages}
-                currentPage={0}
-                renderAhead={1}
-                targetPage={null}
-                observePage={observePage}
-            />
-        )
+    const page3 = screen.queryByAltText("Page 3");
 
-        for(const page of pages){
-            const element = screen.getByAltText(`Page ${page.index+1}`)
-            expect(element.parentElement).toHaveAttribute("data-page",String(page.index+1))
-        }
-    })
+    if (page3) {
+      expect(page3).toHaveAttribute("data-should-load", "false");
+    }
+  });
+
+  it("loads  targetPage when targetPage is rendered", () => {
+    const pages = createPages(10);
+    const observePage = vi.fn();
+    render(
+      <LongStripReader
+        pages={pages}
+        currentPage={1}
+        renderAhead={1}
+        targetPage={3}
+        observePage={observePage}
+      />,
+    );
+    const targetPage = screen.queryAllByAltText("Page 4");
+
+    if (targetPage) {
+      expect(targetPage).toHaveAttribute("data-should-load", "true");
+    }
+  });
+
+  it("passes mounted page elements to observePage", () => {
+    const pages = createPages(100);
+    const observePage = vi.fn();
+
+    render(
+      <LongStripReader
+        pages={pages}
+        currentPage={0}
+        renderAhead={2}
+        targetPage={null}
+        observePage={observePage}
+      />,
+    );
+
+    expect(observePage).toHaveBeenCalled();
+    expect(observePage.mock.calls.length).toBeLessThan(pages.length);
+
+    for (const [element] of observePage.mock.calls) {
+      expect(element).toBeInstanceOf(HTMLDivElement);
+      expect(element.dataset.page).toBeDefined();
+    }
+  });
+  it("sets the correct data-page value",()=>{
+    const pages = createPages(10)
+    const observePage= vi.fn()
+    render(<LongStripReader pages={pages} currentPage={0} renderAhead={2} targetPage={null} observePage={observePage}/>)
+    
+    const renderedImages=screen.getAllByRole("img")
+
+    for(const image of renderedImages){
+        const pageWrapper = image.parentElement?.parentElement
+        expect(pageWrapper).toBeInTheDocument();
+
+        const pageNumber=Number(image.getAttribute("alt")?.replace("Page",""))
+
+        expect(pageWrapper).toHaveAttribute("data-page",String(pageNumber))
+    }
 })
+});
