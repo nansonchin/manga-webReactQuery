@@ -1,11 +1,13 @@
-import { useLongStripNavigation } from "../../hooks/useLongStripNavigation";
 import { useLongStripVirtualizer } from "../../hooks/useLongStripVirtualizer";
 import ReaderImage from "../ReaderImage/ReaderImage";
+import "./LongStripReader.scss";
+
 
 type ReaderPageData = {
   index: number;
   url: string;
 };
+
 
 type LongStripReaderProps = {
   pages: ReaderPageData[];
@@ -14,6 +16,7 @@ type LongStripReaderProps = {
   targetPage: number | null;
   observePage: (element: HTMLElement | null) => void;
 };
+
 
 function LongStripReader({
   pages,
@@ -26,70 +29,85 @@ function LongStripReader({
     count: pages.length,
   });
 
+
   const virtualItems = virtualizer.getVirtualItems();
 
-  // const renderFromPage = Math.max(
-  //   currentPage,
-  //   targetPage ?? 0,
-  // )
+
   return (
-    <div
+    <section
       ref={parentRef}
       className="reader-long-strip"
-      style={{ height: "100vh", overflow: "auto", position: "relative" }}
+      aria-label="Long strip reader"
     >
       <div
+        className="reader-long-strip__content"
         style={{
           height: `${virtualizer.getTotalSize()}px`,
-          width: "100%",
-          position: "relative",
         }}
       >
-      {virtualItems.map((virtualItem) => {
-        // const shouldLoad = page.index <= renderFromPage + renderAhead;
-        const page = pages[virtualItem.index];
-        if (!page) {
-          return null;
-        }
+        {virtualItems.map((virtualItem) => {
+          const page = pages[virtualItem.index];
 
-        const isNearCurrentPage =
-          Math.abs(page.index - currentPage) <= renderAhead;
 
-        const isTargetPage = targetPage !== null && page.index === targetPage;
+          if (!page) {
+            return null;
+          }
 
-        const shouldLoad = isNearCurrentPage || isTargetPage;
 
-        return (
-          <div
-            key={page.index}
-            data-page={page.index + 1}
-            ref={(element) => {
-              if (!element) {
-                return;
-              }
-              virtualizer.measureElement(element);
-              observePage(element);
-            }}
-            data-index={virtualItem.index}
-            style={{
-              position: "absolute",
-              top: 0,
-              left: 0,
-              width: "100%",
-              transform: `translateY(${virtualItem.start}px)`,
-            }}
-          >
-            <ReaderImage
-              src={page.url}
-              alt={`Page ${page.index + 1}`}
-              shouldLoad={shouldLoad}
-            />
-          </div>
-        );
-      })}
+          const distanceFromCurrentPage = Math.abs(
+            page.index - currentPage
+          );
+
+
+          const isNearCurrentPage =
+            distanceFromCurrentPage <= renderAhead;
+
+
+          const isTargetPage =
+            targetPage !== null &&
+            page.index === targetPage;
+
+
+          const shouldLoad =
+            isNearCurrentPage || isTargetPage;
+
+
+          return (
+            <div
+              key={page.index}
+              className="reader-long-strip__page"
+              data-page={page.index + 1}
+              data-index={virtualItem.index}
+              ref={(element) => {
+                if (!element) {
+                  return;
+                }
+
+
+                virtualizer.measureElement(element);
+                observePage(element);
+              }}
+              style={{
+                transform: `translateY(${virtualItem.start}px)`,
+              }}
+            >
+              <div className="reader-long-strip__page-inner">
+                <ReaderImage
+                  src={page.url}
+                  alt={`Page ${page.index + 1}`}
+                  shouldLoad={shouldLoad}
+                />
+              </div>
+            </div>
+          );
+        })}
       </div>
-    </div>
+    </section>
   );
 }
 
+
 export default LongStripReader;
+
+
+

@@ -1,0 +1,270 @@
+:root {
+  /* =========================================================
+     BANSHEE — CORE COLORS
+     ========================================================= */
+
+  --color-black: #080808;
+  --color-black-soft: #101010;
+  --color-black-muted: #171717;
+
+  --color-white: #f5f5f2;
+  --color-white-muted: #b8b8b2;
+  --color-white-dim: #777771;
+
+  /*
+    Banshee Gold
+
+  */
+
+  --color-gold: #f2c300;
+  --color-gold-bright: #ffd429;
+  --color-gold-dark: #9f7f00;
+
+  --color-gold-soft: rgba(242, 195, 0, 0.12);
+  --color-gold-border: rgba(242, 195, 0, 0.32);
+
+  /*
+    Functional colors
+  */
+
+  --color-success: #7fa66b;
+  --color-error: #d66b5d;
+  --color-warning: #e2ad31;
+
+  /* =========================================================
+     SURFACES
+     ========================================================= */
+
+  --surface-page: #080808;
+  --surface-primary: #101010;
+  --surface-secondary: #151515;
+  --surface-elevated: #1b1b1b;
+
+  --surface-overlay: rgba(0, 0, 0, 0.72);
+
+  /*
+    Subtle glass surface.
+
+  */
+
+  --surface-glass: rgba(15, 15, 15, 0.82);
+
+  /* =========================================================
+     BORDERS
+     ========================================================= */
+
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-default: rgba(255, 255, 255, 0.12);
+
+  --border-gold: rgba(242, 195, 0, 0.35);
+  --border-gold-strong: rgba(242, 195, 0, 0.65);
+
+  /* =========================================================
+     TEXT
+     ========================================================= */
+
+  --text-primary: #f4f4ef;
+  --text-secondary: #aaa9a2;
+  --text-muted: #77766f;
+
+  --text-gold: #f2c300;
+
+  /* =========================================================
+     TYPOGRAPHY
+     ========================================================= */
+
+  --font-ui:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+
+  --font-display:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    sans-serif;
+
+  /* =========================================================
+     FONT SIZES
+     ========================================================= */
+
+  --text-xs: 0.75rem;
+  --text-sm: 0.8125rem;
+  --text-md: 0.9375rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.375rem;
+  --text-2xl: 1.75rem;
+  --text-3xl: 2.25rem;
+  --text-4xl: 3rem;
+
+  /* =========================================================
+     SPACING
+     ========================================================= */
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-20: 80px;
+
+  /* =========================================================
+     RADIUS
+     ========================================================= */
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+  --radius-pill: 999px;
+
+  /* =========================================================
+     SHADOWS
+     ========================================================= */
+
+  --shadow-sm:
+    0 2px 8px rgba(0, 0, 0, 0.18);
+
+  --shadow-md:
+    0 8px 24px rgba(0, 0, 0, 0.28);
+
+  --shadow-lg:
+    0 20px 60px rgba(0, 0, 0, 0.42);
+
+
+  --shadow-gold:
+    0 0 24px rgba(242, 195, 0, 0.12);
+
+  /* =========================================================
+     MOTION
+     ========================================================= */
+
+  --duration-fast: 120ms;
+  --duration-normal: 200ms;
+  --duration-slow: 320ms;
+
+  --ease-standard:
+    cubic-bezier(0.2, 0.8, 0.2, 1);
+
+  /* =========================================================
+     Z-INDEX
+     ========================================================= */
+
+  --z-content: 1;
+  --z-header: 20;
+  --z-toolbar: 50;
+  --z-overlay: 100;
+  --z-modal: 200;
+  --z-toast: 300;
+}
+
+/* =========================================================
+   GLOBAL DARK THEME
+   ========================================================= */
+
+html {
+  color-scheme: dark;
+  background: var(--surface-page);
+}
+
+body {
+  margin: 0;
+
+  background:
+    radial-gradient(
+      circle at 50% -20%,
+      rgba(242, 195, 0, 0.045),
+      transparent 38%
+    ),
+    var(--surface-page);
+
+  color: var(--text-primary);
+
+  font-family: var(--font-ui);
+  font-size: var(--text-md);
+  line-height: 1.5;
+
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* =========================================================
+   GLOBAL ELEMENTS
+   ========================================================= */
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  color: inherit;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible {
+  outline: 2px solid var(--color-gold);
+  outline-offset: 3px;
+}
+
+a {
+  color: inherit;
+}
+
+/* =========================================================
+   SCROLLBAR
+   ========================================================= */
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color:
+    var(--color-gold-dark)
+    transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: #383838;
+  border-radius: var(--radius-pill);
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--color-gold-dark);
+}
+
+/* =========================================================
+   REDUCED MOTION
+   ========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+

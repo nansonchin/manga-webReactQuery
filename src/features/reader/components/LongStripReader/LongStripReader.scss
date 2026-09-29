@@ -1,0 +1,586 @@
+.reader-long-strip {
+  position: relative;
+
+
+  width: 100%;
+  height: 100vh;
+
+
+  overflow-x: hidden;
+  overflow-y: auto;
+
+
+  background: var(--reader-bg);
+
+
+  /*
+   * Keep vertical scrolling native.
+   *
+   * This is important for mobile because later
+   * we can add horizontal swipe gestures without
+   * destroying normal vertical manga scrolling.
+   */
+  touch-action: pan-y;
+
+
+  /*
+   * Firefox scrollbar.
+   */
+  scrollbar-width: thin;
+
+
+  scrollbar-color:
+    var(--reader-gold-dark)
+    transparent;
+
+
+  /*
+   * Keep the reader above normal page content
+   * but below the toolbar.
+   */
+  position: relative;
+
+
+  isolation: isolate;
+}
+
+
+
+
+/* =========================================================
+   SCROLLBAR
+========================================================= */
+
+
+.reader-long-strip::-webkit-scrollbar {
+  width: 8px;
+}
+
+
+
+
+.reader-long-strip::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+
+
+
+.reader-long-strip::-webkit-scrollbar-thumb {
+  background: var(--reader-gold-dark);
+
+
+  border: 2px solid transparent;
+  border-radius: 999px;
+
+
+  background-clip: padding-box;
+
+
+  transition:
+    background-color 0.2s ease;
+}
+
+
+
+
+.reader-long-strip::-webkit-scrollbar-thumb:hover {
+  background: var(--reader-gold);
+
+
+  background-clip: padding-box;
+}
+
+
+
+
+/* =========================================================
+   VIRTUALIZED CONTENT
+========================================================= */
+
+
+.reader-long-strip__content {
+  position: relative;
+
+
+  width: 100%;
+
+
+  /*
+   * The height is controlled by TanStack Virtual.
+   *
+   * Do not replace this with min-height or height: 100%.
+   */
+}
+
+
+
+
+/* =========================================================
+   PAGE
+========================================================= */
+
+
+.reader-long-strip__page {
+  position: absolute;
+
+
+  top: 0;
+  left: 0;
+
+
+  width: 100%;
+
+
+  /*
+   * The virtualizer controls the vertical position.
+   */
+  will-change: transform;
+}
+
+
+
+
+/* =========================================================
+   PAGE INNER
+========================================================= */
+
+
+.reader-long-strip__page-inner {
+  position: relative;
+
+
+  width: 100%;
+
+
+  /*
+   * Small visual separation between manga pages.
+   *
+   * We don't use a large gap because long-strip reading
+   * should still feel like one continuous manga.
+   */
+  padding-bottom: 1px;
+
+
+  box-sizing: border-box;
+}
+
+
+
+
+/* =========================================================
+   READER IMAGE
+========================================================= */
+
+
+.reader-long-strip__page-inner .reader-image {
+  position: relative;
+
+
+  width: 100%;
+
+
+  margin: 0;
+
+
+  background: var(--reader-bg);
+}
+
+
+
+
+/*
+ * Important:
+ *
+ * Manga pages must preserve their original proportions.
+ *
+ * Do NOT use object-fit: cover here.
+ */
+
+
+.reader-long-strip__page-inner
+  .reader-image-wrapper {
+  width: 100%;
+
+
+  aspect-ratio: 720 / 1080;
+
+
+  overflow: hidden;
+
+
+  background: var(--reader-surface);
+}
+
+
+
+
+/* =========================================================
+   IMAGE
+========================================================= */
+
+
+.reader-long-strip__page-inner
+  .reader-image-wrapper img {
+  display: block;
+
+
+  width: 100%;
+  height: 100%;
+
+
+  object-fit: contain;
+
+
+  object-position: center;
+
+
+  background: var(--reader-surface);
+}
+
+
+
+
+/* =========================================================
+   PLACEHOLDER
+========================================================= */
+
+
+.reader-long-strip__page-inner
+  .reader-placeholder {
+  width: 100%;
+  height: 100%;
+
+
+  background: var(--reader-surface);
+}
+
+
+
+
+/* =========================================================
+   SKELETON
+========================================================= */
+
+
+.reader-long-strip__page-inner
+  .reader-image-skeleton {
+  position: absolute;
+
+
+  inset: 0;
+
+
+  width: 100%;
+  height: 100%;
+
+
+  background:
+    linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.02) 0%,
+      rgba(255, 255, 255, 0.08) 45%,
+      rgba(255, 255, 255, 0.02) 100%
+    ),
+    var(--reader-surface);
+
+
+  background-size: 200% 100%;
+
+
+  animation:
+    reader-long-strip-skeleton 1.35s
+    ease-in-out infinite;
+}
+
+
+
+
+@keyframes reader-long-strip-skeleton {
+  0% {
+    background-position: 200% 0;
+  }
+
+
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+
+
+
+/* =========================================================
+   IMAGE ERROR
+========================================================= */
+
+
+.reader-long-strip__page-inner
+  .reader-image-error {
+  min-height: 260px;
+
+
+  display: flex;
+
+
+  align-items: center;
+  justify-content: center;
+
+
+  padding: 40px;
+
+
+  box-sizing: border-box;
+
+
+  background: var(--reader-surface);
+
+
+  border-top: 1px solid var(--reader-border);
+  border-bottom: 1px solid var(--reader-border);
+
+
+  color: var(--reader-muted);
+
+
+  font-size: 13px;
+
+
+  letter-spacing: 0.04em;
+}
+
+
+
+
+/* =========================================================
+   GOLD PAGE EDGE
+========================================================= */
+
+
+/*
+ * Very subtle gold line.
+ *
+ * This is intentionally almost invisible.
+ * The goal is "luxury UI", not decorative overload.
+ */
+
+
+.reader-long-strip__page-inner::after {
+  content: "";
+
+
+  position: absolute;
+
+
+  left: 0;
+  right: 0;
+  bottom: 0;
+
+
+  height: 1px;
+
+
+  background:
+    linear-gradient(
+      90deg,
+      transparent,
+      rgba(201, 162, 39, 0.08),
+      transparent
+    );
+
+
+  pointer-events: none;
+}
+
+
+
+
+/* =========================================================
+   DARK MODE
+========================================================= */
+
+
+.reader-dark
+  .reader-long-strip__page-inner {
+  background: #0b0b0b;
+}
+
+
+
+
+.reader-dark
+  .reader-long-strip__page-inner
+  .reader-image {
+  background: #0b0b0b;
+}
+
+
+
+
+.reader-dark
+  .reader-long-strip__page-inner
+  .reader-image-wrapper {
+  background: #0b0b0b;
+}
+
+
+
+
+.reader-dark
+  .reader-long-strip__page-inner
+  .reader-image-wrapper img {
+  background: #0b0b0b;
+}
+
+
+
+
+/* =========================================================
+   DESKTOP
+========================================================= */
+
+
+@media (min-width: 1024px) {
+  .reader-long-strip {
+    /*
+     * Keep the content centered visually on large displays
+     * without restricting the actual page width.
+     */
+    background:
+      linear-gradient(
+        90deg,
+        var(--reader-bg),
+        color-mix(
+          in srgb,
+          var(--reader-bg) 92%,
+          #000 8%
+        ),
+        var(--reader-bg)
+      );
+  }
+
+
+
+
+  .reader-long-strip__page-inner {
+    /*
+     * Manga stays full width.
+     *
+     * This is intentional for a long-strip reader.
+     */
+    width: 100%;
+  }
+}
+
+
+
+
+/* =========================================================
+   TABLET
+========================================================= */
+
+
+@media (max-width: 900px) {
+  .reader-long-strip {
+    scrollbar-width: none;
+  }
+
+
+
+
+  .reader-long-strip::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+
+@media (max-width: 640px) {
+  .reader-long-strip {
+    height: 100svh;
+
+
+    /*
+     * Remove scrollbar entirely on mobile.
+     */
+    scrollbar-width: none;
+  }
+
+
+
+
+  .reader-long-strip::-webkit-scrollbar {
+    display: none;
+  }
+
+
+
+
+  .reader-long-strip__page-inner {
+    padding-bottom: 0;
+  }
+
+
+
+
+  /*
+   * Full width manga.
+   */
+
+
+  .reader-long-strip__page-inner
+    .reader-image {
+    width: 100%;
+  }
+
+
+
+
+  .reader-long-strip__page-inner
+    .reader-image-wrapper {
+    aspect-ratio: 720 / 1080;
+
+
+    border-radius: 0;
+  }
+
+
+
+
+  /*
+   * Error state should also use the entire screen width.
+   */
+
+
+  .reader-long-strip__page-inner
+    .reader-image-error {
+    min-height: 220px;
+
+
+    padding: 32px 20px;
+  }
+}
+
+
+
+
+/* =========================================================
+   REDUCED MOTION
+========================================================= */
+
+
+@media (prefers-reduced-motion: reduce) {
+  .reader-long-strip__page-inner
+    .reader-image-skeleton {
+    animation: none;
+  }
+}
+
+
+

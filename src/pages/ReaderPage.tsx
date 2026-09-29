@@ -1,69 +1,124 @@
 import { useParams } from "react-router-dom";
-import { useChapterPages } from "../features/reader/hooks/useChapterPages";
-import ReaderImage from "../features/reader/components/ReaderImage/ReaderImage";
+
+
+import { useReaderData } from "../features/reader/hooks/useReaderData";
 import { useReaderPreload } from "../features/reader/hooks/useReaderPreload";
 import { useCurrentReaderPage } from "../features/reader/hooks/useCurrentReaderPage";
-import ReaderNavigation from "../features/readerNavigation/components/ReaderNavigation";
-import { useChapterNavigation } from "../features/readerNavigation/hooks/useChapterNavigation";
-import { useInfiniteChapterList } from "../features/chapter/hooks/useInfiniteChapterList";
+import { useReaderProgressPersistence } from "../features/reader/hooks/useReaderProgressPersistence";
+import { useReaderRestorePosition } from "../features/reader/hooks/useReaderRestorePosition";
+import { useLongStripNavigation } from "../features/reader/hooks/useLongStripNavigation";
+import { useLongStripPageTracking } from "../features/reader/hooks/useLongStripPageTracking";
 import { useKeyboardNavigation } from "../features/reader/hooks/useKeyboardNavigation";
 import { useReaderControls } from "../features/reader/hooks/useReaderControl";
+import useReaderToolbar from "../features/readerToolbar/hooks/useReaderToolbar";
+
+
+import LongStripReader from "../features/reader/components/LongStripReader/LongStripReader";
+import SinglePageReader from "../features/reader/components/SinglePageReader/SinglePageReader";
+
+
+import ReaderNavigation from "../features/readerNavigation/components/ReaderNavigation";
+import { useChapterNavigation } from "../features/readerNavigation/hooks/useChapterNavigation";
+
+
 import {
   ReaderSettingsProvider,
   useReaderSettings,
 } from "../features/readerSetting/context/ReaderSettingContext";
+
+
 import ReaderSettingsPanel from "../features/readerSetting/components/ReaderSettingsPanel";
-import LongStripReader from "../features/reader/components/LongStripReader/LongStripReader";
-import SinglePageReader from "../features/reader/components/SinglePageReader/SinglePageReader";
+
+
 import { ReaderProgress } from "../features/readerProgress/components/ReaderProgress";
-import { useCallback, useEffect, useRef } from "react";
-import { useReaderData } from "../features/reader/hooks/useReaderData";
-import { useLongStripPageTracking } from "../features/reader/hooks/useLongStripPageTracking";
-import { useLongStripNavigation } from "../features/reader/hooks/useLongStripNavigation";
-import { useReaderProgressPersistence } from "../features/reader/hooks/useReaderProgressPersistence";
-import { useReaderRestorePosition } from "../features/reader/hooks/useReaderRestorePosition";
+
+
+import ReaderToolbar from "../features/readerToolbar/components/ReaderToolbar";
+
+
+import "./scss/ReaderPage.scss";
+
 
 const RENDER_AHEAD = 1;
 const PREFETCH_AHEAD = 3;
 
+
 function ReaderPage() {
   const { mangaId, chapterId } = useParams();
 
+
   if (!mangaId || !chapterId) {
-    return <div>Invalid Reader Url</div>;
+    return <div>Invalid Reader URL</div>;
   }
+
 
   return (
     <ReaderSettingsProvider>
-      <ReaderPageContent mangaId={mangaId} chapterId={chapterId} />
+      <ReaderPageContent
+        mangaId={mangaId}
+        chapterId={chapterId}
+      />
     </ReaderSettingsProvider>
   );
 }
+
 
 type ReaderPageContentProps = {
   mangaId: string;
   chapterId: string;
 };
 
-function ReaderPageContent({ mangaId, chapterId }: ReaderPageContentProps) {
+
+function ReaderPageContent({
+  mangaId,
+  chapterId,
+}: ReaderPageContentProps) {
   const { settings } = useReaderSettings();
 
-  const { pages, chapters, pagesQuery, chaptersQuery } = useReaderData({
+
+  /**
+   * ---------------------------------------------------------
+   * Reader data
+   * ---------------------------------------------------------
+   */
+
+
+  const {
+    pages,
+    chapters,
+    pagesQuery,
+    chaptersQuery,
+  } = useReaderData({
     mangaId,
     chapterId,
   });
+
+
   const totalPages = pages.length;
 
+
+  /**
+   * ---------------------------------------------------------
+   * Reader mode
+   * ---------------------------------------------------------
+   */
+
+
   const isLongStrip = settings.pageMode === "long-strip";
+
+
+  /**
+   * ---------------------------------------------------------
+   * Chapter navigation
+   * ---------------------------------------------------------
+   */
+
+
   const {
-    previousChapter,
-    nextChapter,
     hasNext,
     hasPrevious,
     goNextChapter,
     goPreviousChapter,
-    pendingNavigation,
-    needsMoreChapters,
     navigationStatus,
   } = useChapterNavigation({
     chapters,
@@ -71,22 +126,24 @@ function ReaderPageContent({ mangaId, chapterId }: ReaderPageContentProps) {
     currentChapterId: chapterId,
     hasMoreChapters: chaptersQuery.hasNextPage ?? false,
     fetchNextPage: chaptersQuery.fetchNextPage,
-    isLoadingMoreChapters: chaptersQuery.isFetchingNextPage,
-    isFetchNextPageError: chaptersQuery.isFetchNextPageError,
+    isLoadingMoreChapters:
+      chaptersQuery.isFetchingNextPage,
+    isFetchNextPageError:
+      chaptersQuery.isFetchNextPageError,
   });
+
+
+  /**
+   * ---------------------------------------------------------
+   * Current page
+   * ---------------------------------------------------------
+   */
+
 
   const {
     currentPage,
     setCurrentPageFromTracking,
     restorePage,
-    // long - strip page
-    // scrollToNextPage,
-    // scrollToPreviousPage,
-    // scrollToPage,
-    // targetPage,
-    // requestScrollToPage,
-
-    // single click page
     goToNextPage,
     goToPreviousPage,
     goToPage,
@@ -94,112 +151,268 @@ function ReaderPageContent({ mangaId, chapterId }: ReaderPageContentProps) {
     totalPages,
   });
 
-  const {restoredPage, hasRestored} = useReaderProgressPersistence({
+
+  /**
+   * ---------------------------------------------------------
+   * Progress persistence
+   * ---------------------------------------------------------
+   */
+
+
+  const {
+    restoredPage,
+    hasRestored,
+  } = useReaderProgressPersistence({
     mangaId,
     chapterId,
     currentPage,
-    totalPages
-  })
+    totalPages,
+  });
 
 
-  // const hasAppliedRestoredPageRef = useRef(false)
+  /**
+   * ---------------------------------------------------------
+   * Long strip navigation
+   * ---------------------------------------------------------
+   */
 
-  // useEffect(()=>{
-  //   if(!hasRestored){
-  //     return;
-  //   }
-
-  //   if(restorePage===null){
-  //     hasAppliedRestoredPageRef.current=true
-  //     return
-  //   }
-
-  //   if(hasAppliedRestoredPageRef.current){
-  //     return
-  //   }
-
-  //   if(!restoredPage){
-  //     return
-  //   }
-
-  //   restorePage(restoredPage)
-  //   hasAppliedRestoredPageRef.current=true
-
-  // },[hasRestored,restorePage,restoredPage])
 
   const {
     targetPage,
     scrollToNextPage,
     scrollToPreviousPage,
     requestScrollToPage,
-  } = useLongStripNavigation({ currentPage, totalPages });
+  } = useLongStripNavigation({
+    currentPage,
+    totalPages,
+  });
+
+
+  /**
+   * ---------------------------------------------------------
+   * Long strip page tracking
+   * ---------------------------------------------------------
+   */
+
 
   const { observePage } = useLongStripPageTracking({
     enabled: isLongStrip,
     onPageChange: setCurrentPageFromTracking,
   });
 
-  useReaderPreload(pages, currentPage, PREFETCH_AHEAD);
 
-  const nextPage = isLongStrip ? scrollToNextPage : goToNextPage;
+  /**
+   * ---------------------------------------------------------
+   * Image preload
+   * ---------------------------------------------------------
+   */
 
-  const previousPage = isLongStrip ? scrollToPreviousPage : goToPreviousPage;
 
-  const goToReaderPage = isLongStrip ? requestScrollToPage : goToPage;
+  useReaderPreload(
+    pages,
+    currentPage,
+    PREFETCH_AHEAD
+  );
 
-  useReaderRestorePosition({restoredPage,hasRestored,isLongStrip,restorePage,requestScrollToPage})
+
+  /**
+   * ---------------------------------------------------------
+   * Unified page navigation
+   * ---------------------------------------------------------
+   */
+
+
+  const nextPage = isLongStrip
+    ? scrollToNextPage
+    : goToNextPage;
+
+
+  const previousPage = isLongStrip
+    ? scrollToPreviousPage
+    : goToPreviousPage;
+
+
+  const goToReaderPage = isLongStrip
+    ? requestScrollToPage
+    : goToPage;
+
+
+  /**
+   * ---------------------------------------------------------
+   * Restore reader position
+   * ---------------------------------------------------------
+   */
+
+
+  useReaderRestorePosition({
+    restoredPage,
+    hasRestored,
+    isLongStrip,
+    restorePage,
+    requestScrollToPage,
+  });
+
+
+  /**
+   * ---------------------------------------------------------
+   * Reader controls
+   * ---------------------------------------------------------
+   */
 
 
   const controls = useReaderControls({
     currentPage,
     totalPages,
-    // scrollToNextPage,
-    // scrollToPreviousPage,
-    // scrollToPage,
-    // requestScrollToPage,
+
 
     nextChapter: goNextChapter,
     previousChapter: goPreviousChapter,
 
-    // clickNextPage: goToNextPage,
-    // clickPreviousPage: goToPreviousPage,
+
     nextPage,
     previousPage,
-    goToPage,
+
+
+    goToPage: goToReaderPage,
   });
+
+
+  /**
+   * ---------------------------------------------------------
+   * Keyboard navigation
+   * ---------------------------------------------------------
+   */
+
 
   useKeyboardNavigation({
     controls,
   });
 
+
+  /**
+   * ---------------------------------------------------------
+   * Reader toolbar
+   * ---------------------------------------------------------
+   */
+
+
+  const {
+    isVisible: isToolbarVisible,
+    isSettingsOpen,
+    toggleVisibility,
+    openSettings,
+    closeSettings,
+  } = useReaderToolbar({
+    onPreviousPage: previousPage,
+    onNextPage: nextPage,
+    onPreviousChapter: goPreviousChapter,
+    onNextChapter: goNextChapter,
+  });
+
+
+  /**
+   * ---------------------------------------------------------
+   * Loading state
+   * ---------------------------------------------------------
+   */
+
+
   if (pagesQuery.isPending) {
-    return <div>Loading pages ...</div>;
+    return (
+      <div className="reader-loading">
+        Loading pages...
+      </div>
+    );
   }
+
+
+  /**
+   * ---------------------------------------------------------
+   * Error state
+   * ---------------------------------------------------------
+   */
+
 
   if (pagesQuery.isError) {
-    return <div>Error: {pagesQuery.error.message}</div>;
+    return (
+      <div className="reader-error">
+        Error: {pagesQuery.error.message}
+      </div>
+    );
   }
 
+
+  /**
+   * ---------------------------------------------------------
+   * Reader theme
+   * ---------------------------------------------------------
+   */
+
+
   const readerClassName =
-    settings.theme === "dark" ? "reader reader-dark" : "reader reader-light";
+    settings.theme === "dark"
+      ? "reader reader-dark"
+      : "reader reader-light";
+
+
+  /**
+   * ---------------------------------------------------------
+   * Render
+   * ---------------------------------------------------------
+   */
+
 
   return (
     <div className={readerClassName}>
-      <ReaderSettingsPanel />
-      <div
-        style={{
-          position: "fixed",
-          top: 10,
-          left: 10,
-          background: "#fff",
-          zIndex: 10,
+      {/**
+       * =====================================================
+       * Reader Toolbar
+       * =====================================================
+       */}
+
+
+      <ReaderToolbar
+        currentPage={currentPage}
+        totalPages={totalPages}
+        hasPreviousChapter={hasPrevious}
+        hasNextChapter={hasNext}
+        isNavigationLoading={
+          navigationStatus === "loading"
+        }
+        isVisible={isToolbarVisible}
+        isSettingsOpen={isSettingsOpen}
+        onPreviousPage={previousPage}
+        onNextPage={nextPage}
+        onPreviousChapter={goPreviousChapter}
+        onNextChapter={goNextChapter}
+        onProgressClick={() => {
+          const progressButton =
+            document.querySelector<HTMLButtonElement>(
+              ".reader-progress"
+            );
+
+
+          progressButton?.click();
         }}
-      >
-        Current Page : {currentPage + 1}
-      </div>
+        onSettingsClick={() => {
+          if (isSettingsOpen) {
+            closeSettings();
+          } else {
+            openSettings();
+          }
+        }}
+        onToggleVisibility={toggleVisibility}
+      />
+
+
+      {/**
+       * =====================================================
+       * Chapter Navigation
+       * =====================================================
+       */}
+
+
       <ReaderNavigation
-        // previousChapter={previousChapter}
-        // nextChapter={nextChapter}
         hasPrevious={hasPrevious}
         hasNext={hasNext}
         onPrevious={goPreviousChapter}
@@ -207,32 +420,86 @@ function ReaderPageContent({ mangaId, chapterId }: ReaderPageContentProps) {
         navigationStatus={navigationStatus}
       />
 
-      {settings.pageMode === "long-strip" ? (
-        <LongStripReader
-          pages={pages}
-          currentPage={currentPage}
-          renderAhead={RENDER_AHEAD}
-          observePage={observePage}
-          targetPage={targetPage}
-        />
-      ) : (
-        <SinglePageReader
-          pages={pages}
-          currentPage={currentPage}
-          // observePage={observePage}
-          onNextPage={nextPage}
-          onPreviousPage={previousPage}
-        />
+
+      {/**
+       * =====================================================
+       * Reader content
+       * =====================================================
+       */}
+
+
+      <main className="reader-content">
+        {isLongStrip ? (
+          <LongStripReader
+            pages={pages}
+            currentPage={currentPage}
+            renderAhead={RENDER_AHEAD}
+            observePage={observePage}
+            targetPage={targetPage}
+          />
+        ) : (
+          <SinglePageReader
+            pages={pages}
+            currentPage={currentPage}
+            onNextPage={nextPage}
+            onPreviousPage={previousPage}
+          />
+        )}
+      </main>
+
+
+      {/**
+       * =====================================================
+       * Reader Progress
+       * =====================================================
+       */}
+
+
+      <ReaderProgress
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onGoToPage={goToReaderPage}
+      />
+
+
+      {/**
+       * =====================================================
+       * Settings overlay
+       * =====================================================
+       */}
+
+
+      {isSettingsOpen && (
+        <div
+          className="reader-settings-overlay"
+          onClick={closeSettings}
+        >
+          <div
+            className="reader-settings-container"
+            onClick={(event) => {
+              event.stopPropagation();
+            }}
+          >
+            <button
+              type="button"
+              className="reader-settings-close"
+              onClick={closeSettings}
+              aria-label="Close reader settings"
+            >
+              ×
+            </button>
+
+
+            <ReaderSettingsPanel />
+          </div>
+        </div>
       )}
-      <div>
-        <ReaderProgress
-          currentPage={currentPage}
-          totalPages={pages.length}
-          onGoToPage={goToReaderPage}
-        />
-      </div>
     </div>
   );
 }
 
+
 export default ReaderPage;
+
+
+

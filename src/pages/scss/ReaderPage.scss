@@ -1,0 +1,567 @@
+.reader {
+  --reader-bg: #f4f2ec;
+  --reader-surface: #ffffff;
+  --reader-text: #151515;
+  --reader-muted: #77736a;
+  --reader-border: rgba(20, 20, 20, 0.1);
+
+
+  --reader-gold: #c9a227;
+  --reader-gold-light: #e3c65b;
+  --reader-gold-dark: #8e7117;
+
+
+  --reader-black: #101010;
+  --reader-black-soft: #181818;
+
+
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+
+
+  background: var(--reader-bg);
+  color: var(--reader-text);
+
+
+  transition:
+    background-color 0.25s ease,
+    color 0.25s ease;
+
+
+  overflow-x: hidden;
+}
+
+
+/* =========================================================
+   LIGHT THEME
+   ========================================================= */
+
+
+.reader-light {
+  --reader-bg: #f4f2ec;
+  --reader-surface: #ffffff;
+  --reader-text: #151515;
+  --reader-muted: #77736a;
+  --reader-border: rgba(20, 20, 20, 0.1);
+}
+
+
+
+
+/* =========================================================
+   DARK THEME
+   ========================================================= */
+
+
+.reader-dark {
+  --reader-bg: #0b0b0b;
+  --reader-surface: #121212;
+  --reader-text: #eeeeea;
+  --reader-muted: #9b988f;
+  --reader-border: rgba(255, 255, 255, 0.1);
+}
+
+
+
+
+/* =========================================================
+   READER CONTENT
+   ========================================================= */
+
+
+.reader-long-strip,
+.reader-single-page {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+}
+
+
+
+
+/* =========================================================
+   LONG STRIP
+   ========================================================= */
+
+
+.reader-long-strip {
+  background: var(--reader-bg);
+
+
+  /*
+   * Toolbar is fixed above the reader.
+   * Keep the reader itself independent from toolbar height.
+   */
+  overflow-x: hidden;
+
+
+  /*
+   * Better touch behaviour on mobile.
+   */
+  touch-action: pan-y;
+}
+
+
+
+
+/*
+ * The virtualized inner container.
+ *
+ * We intentionally don't give it a fixed background.
+ * The parent reader controls the theme background.
+ */
+
+
+.reader-long-strip > div {
+  position: relative;
+}
+
+
+
+
+/* =========================================================
+   SINGLE PAGE
+   ========================================================= */
+
+
+.reader-single-page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+
+  min-height: 100vh;
+
+
+  padding: 88px 24px 40px;
+
+
+  box-sizing: border-box;
+
+
+  background: var(--reader-bg);
+
+
+  touch-action: pan-y;
+}
+
+
+
+
+/*
+ * Every page exists in the DOM,
+ * but only the active one is visible.
+ */
+
+
+.reader-single-page-item {
+  position: absolute;
+
+
+  inset: 0;
+
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+
+  padding: 88px 24px 40px;
+
+
+  box-sizing: border-box;
+
+
+  opacity: 0;
+  pointer-events: none;
+
+
+  transform: scale(0.985);
+
+
+  transition:
+    opacity 0.18s ease,
+    transform 0.18s ease;
+}
+
+
+
+
+.reader-single-page-item-active {
+  position: relative;
+
+
+  width: 100%;
+
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+
+  opacity: 1;
+  pointer-events: auto;
+
+
+  transform: scale(1);
+
+
+  padding: 0;
+
+
+  box-sizing: border-box;
+}
+
+
+
+
+/* =========================================================
+   SINGLE PAGE IMAGE SIZE
+   ========================================================= */
+
+
+.reader-single-page-item-active .reader-image {
+  width: min(100%, 900px);
+}
+
+
+
+
+.reader-single-page-item-active .reader-image-wrapper {
+  max-height: calc(100vh - 128px);
+}
+
+
+
+
+/* =========================================================
+   READER IMAGE
+   ========================================================= */
+
+
+.reader .reader-image {
+  width: 100%;
+}
+
+
+
+
+/*
+ * Long strip pages should preserve their natural
+ * aspect-ratio instead of being cropped.
+ */
+
+
+.reader-long-strip .reader-image-wrapper {
+  aspect-ratio: 720 / 1080;
+
+
+  background: var(--reader-surface);
+}
+
+
+
+
+/*
+ * Important:
+ *
+ * Manga pages should NOT use object-fit: cover.
+ *
+ * cover can crop manga artwork.
+ */
+
+
+.reader .reader-image-wrapper img {
+  object-fit: contain;
+}
+
+
+
+
+/* =========================================================
+   IMAGE PLACEHOLDER
+   ========================================================= */
+
+
+.reader .reader-placeholder {
+  background:
+    linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.02),
+      rgba(255, 255, 255, 0.08),
+      rgba(255, 255, 255, 0.02)
+    ),
+    var(--reader-surface);
+}
+
+
+
+
+/* =========================================================
+   IMAGE SKELETON
+   ========================================================= */
+
+
+.reader .reader-image-skeleton {
+  background:
+    linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.03),
+      rgba(255, 255, 255, 0.1),
+      rgba(255, 255, 255, 0.03)
+    ),
+    var(--reader-surface);
+
+
+  background-size: 200% 100%;
+
+
+  animation: reader-skeleton-shimmer 1.4s ease-in-out infinite;
+}
+
+
+
+
+@keyframes reader-skeleton-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+
+
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+
+
+
+/* =========================================================
+   IMAGE ERROR
+   ========================================================= */
+
+
+.reader .reader-image-error {
+  min-height: 260px;
+
+
+  padding: 40px;
+
+
+  box-sizing: border-box;
+
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+
+  background: var(--reader-surface);
+
+
+  border: 1px solid var(--reader-border);
+
+
+  color: var(--reader-muted);
+
+
+  font-size: 14px;
+  letter-spacing: 0.04em;
+}
+
+
+
+
+/* =========================================================
+   READER GOLD ACCENT
+   ========================================================= */
+
+
+.reader button:focus-visible {
+  outline: 2px solid var(--reader-gold);
+  outline-offset: 3px;
+}
+
+
+
+
+/* =========================================================
+   SCROLLBAR
+   ========================================================= */
+
+
+.reader-long-strip {
+  scrollbar-width: thin;
+
+
+  scrollbar-color:
+    var(--reader-gold-dark)
+    transparent;
+}
+
+
+
+
+.reader-long-strip::-webkit-scrollbar {
+  width: 8px;
+}
+
+
+
+
+.reader-long-strip::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+
+
+
+.reader-long-strip::-webkit-scrollbar-thumb {
+  background: var(--reader-gold-dark);
+
+
+  border-radius: 999px;
+
+
+  border: 2px solid transparent;
+
+
+  background-clip: padding-box;
+}
+
+
+
+
+.reader-long-strip::-webkit-scrollbar-thumb:hover {
+  background: var(--reader-gold);
+
+
+  background-clip: padding-box;
+}
+
+
+
+
+/* =========================================================
+   DESKTOP
+   ========================================================= */
+
+
+@media (min-width: 1024px) {
+  .reader-single-page {
+    padding-left: 48px;
+    padding-right: 48px;
+  }
+
+
+  .reader-single-page-item {
+    padding-left: 48px;
+    padding-right: 48px;
+  }
+}
+
+
+
+
+/* =========================================================
+   TABLET
+   ========================================================= */
+
+
+@media (max-width: 900px) {
+  .reader-single-page {
+    padding: 76px 16px 24px;
+  }
+
+
+  .reader-single-page-item {
+    padding: 76px 16px 24px;
+  }
+}
+
+
+
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
+
+@media (max-width: 640px) {
+  .reader-single-page {
+    min-height: 100svh;
+
+
+    padding: 68px 0 16px;
+  }
+
+
+  .reader-single-page-item {
+    padding: 68px 0 16px;
+  }
+
+
+  .reader-single-page-item-active {
+    width: 100%;
+  }
+
+
+
+
+  /*
+   * Full width manga on mobile.
+   */
+
+
+  .reader-single-page-item-active .reader-image {
+    width: 100%;
+  }
+
+
+
+
+  /*
+   * Don't artificially limit the image height
+   * too aggressively on small screens.
+   */
+
+
+  .reader-single-page-item-active .reader-image-wrapper {
+    max-height: none;
+  }
+
+
+
+
+  /*
+   * Remove rounded presentation on mobile.
+   * Manga should feel like an actual reading surface.
+   */
+
+
+  .reader .reader-image-wrapper {
+    border-radius: 0;
+  }
+}
+
+
+
+
+/* =========================================================
+   REDUCED MOTION
+   ========================================================= */
+
+
+@media (prefers-reduced-motion: reduce) {
+  .reader,
+  .reader-single-page-item,
+  .reader .reader-image-wrapper img,
+  .reader .reader-image-skeleton {
+    transition: none;
+    animation: none;
+  }
+}
+
+
+

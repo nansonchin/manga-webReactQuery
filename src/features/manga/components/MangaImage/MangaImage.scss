@@ -1,33 +1,403 @@
-.image-wrapper{
-    width: 100%;
-    height: 100%;
-    max-width: 100%;
-    aspect-ratio: 2/3;
-    overflow: hidden;
-    position: relative;
+/*
+|--------------------------------------------------------------------------
+| Manga Image
+|--------------------------------------------------------------------------
+*/
+
+
+.manga-image {
+  position: relative;
+
+
+  width: 100%;
+  height: 100%;
+
+
+  min-width: 0;
+
+
+  overflow: hidden;
+
+
+  background: #171714;
+
+
+  aspect-ratio: 2 / 3;
 }
 
-.image-wrapper img{
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    opacity:0;
-    transition: opacity .3s ease;
+
+/*
+|--------------------------------------------------------------------------
+| Image
+|--------------------------------------------------------------------------
+*/
+
+
+.manga-image__img {
+  position: absolute;
+
+
+  inset: 0;
+
+
+  width: 100%;
+  height: 100%;
+
+
+  display: block;
+
+
+  object-fit: cover;
+
+
+  opacity: 0;
+
+
+  transform: scale(1.015);
+
+
+  transition:
+    opacity 350ms ease,
+    transform 600ms ease;
 }
 
-.image-wrapper img.loaded{
-    opacity: 1;
+
+.manga-image--loaded .manga-image__img {
+  opacity: 1;
+
+
+  transform: scale(1);
 }
 
-.image-skeleton{
-    position:absolute;
-    inset:0;
-    background:#ddd;
+
+/*
+|--------------------------------------------------------------------------
+| Skeleton
+|--------------------------------------------------------------------------
+*/
+
+
+.manga-image__skeleton {
+  position: absolute;
+
+
+  inset: 0;
+
+
+  z-index: 1;
+
+
+  overflow: hidden;
+
+
+  background:
+    linear-gradient(
+      135deg,
+      #181816 0%,
+      #20201c 45%,
+      #181816 100%
+    );
 }
 
-.image-fallback{
-    aspect-ratio: 2/3;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+
+.manga-image__skeleton-shine {
+  position: absolute;
+
+
+  top: 0;
+  left: -120%;
+
+
+  width: 80%;
+  height: 100%;
+
+
+  background:
+    linear-gradient(
+      90deg,
+      transparent,
+      rgba(212, 167, 44, 0.07),
+      transparent
+    );
+
+
+  transform: skewX(-18deg);
+
+
+  animation: manga-image-skeleton-shine 1.6s ease-in-out
+    infinite;
 }
+
+
+@keyframes manga-image-skeleton-shine {
+  0% {
+    left: -120%;
+  }
+
+
+  100% {
+    left: 140%;
+  }
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| Gold corner accent
+|--------------------------------------------------------------------------
+|
+| This is intentionally subtle.
+| The gold should feel like an accent, not decoration everywhere.
+*/
+
+
+.manga-image__corner {
+  position: absolute;
+
+
+  right: 10px;
+  bottom: 10px;
+
+
+  z-index: 2;
+
+
+  width: 18px;
+  height: 18px;
+
+
+  pointer-events: none;
+
+
+  opacity: 0;
+
+
+  border-right: 1px solid #d4a72c;
+  border-bottom: 1px solid #d4a72c;
+
+
+  transform: translate(3px, 3px);
+
+
+  transition:
+    opacity 250ms ease,
+    transform 250ms ease;
+}
+
+
+.manga-image:hover .manga-image__corner {
+  opacity: 0.85;
+
+
+  transform: translate(0, 0);
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| Fallback
+|--------------------------------------------------------------------------
+*/
+
+
+.manga-image--fallback {
+  display: flex;
+
+
+  align-items: center;
+  justify-content: center;
+
+
+  box-sizing: border-box;
+
+
+  min-height: 180px;
+
+
+  background:
+    radial-gradient(
+      circle at center,
+      #24241f 0%,
+      #151513 65%
+    );
+
+
+  border: 1px solid rgba(212, 167, 44, 0.14);
+}
+
+
+.manga-image__fallback-content {
+  display: flex;
+  flex-direction: column;
+
+
+  align-items: center;
+
+
+  gap: 10px;
+
+
+  padding: 20px;
+
+
+  text-align: center;
+}
+
+
+.manga-image__fallback-mark {
+  display: flex;
+
+
+  align-items: center;
+  justify-content: center;
+
+
+  width: 42px;
+  height: 42px;
+
+
+  box-sizing: border-box;
+
+
+  color: #d4a72c;
+
+
+  font-family:
+    Georgia,
+    "Times New Roman",
+    serif;
+
+
+  font-size: 18px;
+  font-weight: 600;
+
+
+  border: 1px solid rgba(212, 167, 44, 0.4);
+
+
+  border-radius: 50%;
+}
+
+
+.manga-image__fallback-label {
+  color: #77746b;
+
+
+  font-size: 9px;
+  font-weight: 600;
+
+
+  letter-spacing: 0.14em;
+
+
+  text-transform: uppercase;
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| Loading state
+|--------------------------------------------------------------------------
+*/
+
+
+.manga-image--loading {
+  background: #181816;
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| Loaded state
+|--------------------------------------------------------------------------
+*/
+
+
+.manga-image--loaded {
+  background: #11110f;
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| Hover
+|--------------------------------------------------------------------------
+*/
+
+
+.manga-image:hover .manga-image__img {
+  transform: scale(1.025);
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| Mobile
+|--------------------------------------------------------------------------
+*/
+
+
+@media (max-width: 480px) {
+  .manga-image__corner {
+    right: 7px;
+    bottom: 7px;
+
+
+    width: 14px;
+    height: 14px;
+  }
+
+
+  .manga-image__fallback-mark {
+    width: 36px;
+    height: 36px;
+
+
+    font-size: 16px;
+  }
+
+
+  .manga-image__fallback-label {
+    font-size: 8px;
+  }
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| Reduced motion
+|--------------------------------------------------------------------------
+*/
+
+
+@media (prefers-reduced-motion: reduce) {
+  .manga-image__img {
+    transition: opacity 150ms ease;
+    transform: none;
+  }
+
+
+  .manga-image--loaded .manga-image__img {
+    transform: none;
+  }
+
+
+  .manga-image__skeleton-shine {
+    animation: none;
+  }
+
+
+  .manga-image__corner {
+    transition: none;
+  }
+
+
+  .manga-image:hover .manga-image__img {
+    transform: none;
+  }
+}
+
+
+
+
+

@@ -3,8 +3,9 @@ import { usePrefetchManga } from "../../hooks/usePrefetchManga";
 import MangaImage from "../MangaImage/MangaImage";
 import "./MangaCard.scss";
 
+
 type MangaCardProps = {
-  id:string;
+  id: string;
   title: string;
   description: string;
   coverUrl: string | null;
@@ -12,33 +13,87 @@ type MangaCardProps = {
   coverLargeUrl: string | null;
 };
 
-function MangaCard({ id, title, description, coverSmallUrl,coverLargeUrl }: MangaCardProps) {
-  
-  const prefetchManga=usePrefetchManga()
+
+function MangaCard({
+  id,
+  title,
+  description,
+  coverSmallUrl,
+  coverLargeUrl,
+}: MangaCardProps) {
+  const prefetchManga = usePrefetchManga();
+
 
   const srcSet = buildCoverSrcSet(
     coverSmallUrl,
     coverLargeUrl
-  )
+  );
+
+
   return (
-    <article className="manga-card" onMouseEnter={()=>{
-      prefetchManga(id)
-    }}>
-      <div className="manga-card_cover">
-        <MangaImage 
-          //src for fallback
+    <article
+      className="manga-card"
+      onMouseEnter={() => {
+        prefetchManga(id);
+      }}
+    >
+      <div className="manga-card__cover">
+        <MangaImage
           src={coverSmallUrl}
-          // srcSet to let the brwoser detect the image resolution, network condition, device px ratio need for the device 
-          srcSet={srcSet} 
-          alt={title}/>
+          srcSet={srcSet}
+          sizes="(max-width: 640px) 45vw, (max-width: 1024px) 30vw, 220px"
+          alt={title}
+        />
+
+
+        <div className="manga-card__cover-overlay">
+          <span className="manga-card__cover-label">
+            READ
+          </span>
+        </div>
+
+
+        <div className="manga-card__corner manga-card__corner--top" />
+        <div className="manga-card__corner manga-card__corner--bottom" />
       </div>
 
-      <div className="manga-card_body">
-        <div className="manga-card_title">{title}</div>
-        <div className="manga-card_description">{description}</div>
+
+      <div className="manga-card__body">
+        <div className="manga-card__meta">
+          <span className="manga-card__meta-line" />
+          <span>MANGA</span>
+        </div>
+
+
+        <h2 className="manga-card__title">
+          {title}
+        </h2>
+
+
+        {description && (
+          <p className="manga-card__description">
+            {description}
+          </p>
+        )}
+
+
+        <div className="manga-card__footer">
+          <span className="manga-card__footer-label">
+            OPEN SERIES
+          </span>
+
+
+          <span className="manga-card__arrow">
+            →
+          </span>
+        </div>
       </div>
     </article>
   );
 }
 
+
 export default MangaCard;
+
+
+

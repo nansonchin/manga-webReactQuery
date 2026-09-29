@@ -5,14 +5,7 @@ import LongStripReader from "../../components/LongStripReader/LongStripReader";
 
 import { useLongStripVirtualizer } from "../../hooks/useLongStripVirtualizer";
 
-/**
- * Mock ReaderImage
- *
- * 我们在 LongStripReader test 中，
- * 不需要真的测试图片加载。
- *
- * ReaderImage 自己应该有另外的测试文件。
- */
+
 vi.mock("../../components/ReaderImage/ReaderImage", () => ({
   default: ({
     src,
@@ -25,16 +18,6 @@ vi.mock("../../components/ReaderImage/ReaderImage", () => ({
   }) => <img src={src} alt={alt} data-should-load={String(shouldLoad)} />,
 }));
 
-/**
- * Mock LongStripVirtualizer
- *
- * 这里是整个测试最重要的部分。
- *
- * 我们不测试 TanStack Virtual 本身。
- * 我们假设 virtualizer 已经正确告诉 component：
- *
- * "现在需要渲染 page 0, 1, 2..."
- */
 vi.mock("../../hooks/useLongStripVirtualizer", () => ({
   useLongStripVirtualizer: vi.fn(),
 }));
@@ -44,9 +27,6 @@ type ReaderPageData = {
   url: string;
 };
 
-/**
- * 建立测试 pages
- */
 function createPages(count: number): ReaderPageData[] {
   return Array.from({ length: count }, (_, index) => ({
     index,
@@ -54,18 +34,6 @@ function createPages(count: number): ReaderPageData[] {
   }));
 }
 
-/**
- * 建立 fake virtual items
- *
- * 例如：
- *
- * page 0
- * page 1
- * page 2
- * page 3
- *
- * 每个 page 假设高度 800px。
- */
 function createVirtualItems(count: number, size = 800) {
   return Array.from({ length: count }, (_, index) => ({
     index,
@@ -77,9 +45,6 @@ function createVirtualItems(count: number, size = 800) {
   }));
 }
 
-/**
- * 建立 fake virtualizer
- */
 function createMockVirtualizer(
   virtualItems: ReturnType<typeof createVirtualItems>,
   totalSize = virtualItems.length * 800,
@@ -132,13 +97,6 @@ describe("LongStripReader", () => {
   it("does not render pages outside the virtualized range", () => {
     const pages = createPages(100);
 
-    /**
-     * Virtualizer 只告诉 component：
-     *
-     * page 0 ~ page 4
-     *
-     * 所以 page 50 不应该出现在 DOM。
-     */
     const virtualItems = createVirtualItems(5);
 
     const mockVirtualizer = createMockVirtualizer(virtualItems);
@@ -195,18 +153,6 @@ describe("LongStripReader", () => {
   it("loads pages near currentPage", () => {
     const pages = createPages(10);
 
-    /**
-     * currentPage = 1
-     * renderAhead = 1
-     *
-     * 所以：
-     *
-     * page 0 -> true
-     * page 1 -> true
-     * page 2 -> true
-     *
-     * page 3 -> false
-     */
     const virtualItems = createVirtualItems(4);
 
     const mockVirtualizer = createMockVirtualizer(virtualItems);
@@ -292,16 +238,6 @@ describe("LongStripReader", () => {
   it("loads targetPage even when it is outside renderAhead", () => {
     const pages = createPages(10);
 
-    /**
-     * currentPage = 0
-     * renderAhead = 1
-     *
-     * targetPage = 3
-     *
-     * page 4 虽然距离 currentPage 很远，
-     * 但是因为是 targetPage，
-     * 所以 shouldLoad 必须是 true。
-     */
     const virtualItems = createVirtualItems(5);
 
     const mockVirtualizer = createMockVirtualizer(virtualItems);
@@ -392,15 +328,6 @@ describe("LongStripReader", () => {
     for (const image of renderedImages) {
       const pageWrapper = image.parentElement;
 
-      /**
-       * Mock ReaderImage：
-       *
-       * <div data-page="1">
-       *   <img />
-       * </div>
-       *
-       * 所以 img.parentElement 就是 page wrapper。
-       */
       expect(pageWrapper).toBeInTheDocument();
 
       const pageNumber = Number(
