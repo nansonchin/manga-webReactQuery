@@ -142,6 +142,12 @@ function ReaderPageContent({ mangaId, chapterId }: ReaderPageContentProps) {
    * Long strip navigation
    * ---------------------------------------------------------
    */
+  
+  const { observePage } = useLongStripPageTracking({
+    enabled: isLongStrip,
+    root: longStripScrollContainer,
+    onPageChange: setCurrentPageFromTracking,
+  });
 
   const {
     // targetPage,
@@ -151,7 +157,7 @@ function ReaderPageContent({ mangaId, chapterId }: ReaderPageContentProps) {
   } = useLongStripNavigation({
     currentPage,
     totalPages,
-    virtualizer
+    onPageChange:setCurrentPageFromTracking
   });
 
   /**
@@ -160,11 +166,6 @@ function ReaderPageContent({ mangaId, chapterId }: ReaderPageContentProps) {
    * ---------------------------------------------------------
    */
 
-  const { observePage } = useLongStripPageTracking({
-    enabled: isLongStrip,
-    root: longStripScrollContainer,
-    onPageChange: setCurrentPageFromTracking,
-  });
 
   /**
    * ---------------------------------------------------------
