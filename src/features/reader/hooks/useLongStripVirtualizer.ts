@@ -8,7 +8,7 @@ type UseLongStripVirtualizerProps={
 export function useLongStripVirtualizer({
     count,
 }:UseLongStripVirtualizerProps){
-    const parentRef = useRef<HTMLDivElement|null>(null)
+    const parentRef = useRef<HTMLElement|null>(null)
 
     const virtualizer = useVirtualizer({
         count,

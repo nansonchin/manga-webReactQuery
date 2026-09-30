@@ -34,7 +34,7 @@ export function useChapterNavigation({
 }: UseChapterNavigationProps) {
   const navigate = useNavigate();
 
-  console.log("Chapters[][]", chapters);
+  // console.log("Chapters[][]", chapters);
 
   const [pendingNavigation, setPendingNavigation] =
     useState<PendingNavigation>(null);

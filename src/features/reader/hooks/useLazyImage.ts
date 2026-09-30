@@ -16,11 +16,11 @@ export function useLazyImage() {
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
-          console.log("lazy", element);
-          console.log("lazy", element.getBoundingClientRect().top);
-          console.log(
- element.parentElement?.getBoundingClientRect()
-)
+//           console.log("lazy", element);
+//           console.log("lazy", element.getBoundingClientRect().top);
+//           console.log(
+//  element.parentElement?.getBoundingClientRect()
+// )
           setVisible(true);
           observer.disconnect();
         }

@@ -17,11 +17,11 @@ export function useReaderTapNavigation({
         const middle = width/2
 
         if(clickPosition<middle){
-            console.log("Clicked Previous")
+            // console.log("Clicked Previous")
 
             previous()
         }else{
-            console.log("Clicked Next")
+            // console.log("Clicked Next")
             next()
         }
     },[previous,next])

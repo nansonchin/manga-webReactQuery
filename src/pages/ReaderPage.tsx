@@ -37,6 +37,7 @@ import ReaderToolbar from "../features/readerToolbar/components/ReaderToolbar";
 
 
 import "./scss/ReaderPage.scss";
+import { useEffect, useState } from "react";
 
 
 const RENDER_AHEAD = 1;
@@ -74,6 +75,8 @@ function ReaderPageContent({
   chapterId,
 }: ReaderPageContentProps) {
   const { settings } = useReaderSettings();
+
+  const [longStripScrollContainer, setLongStripScrollContainer] = useState<HTMLElement|null>(null)
 
 
   /**
@@ -197,6 +200,7 @@ function ReaderPageContent({
 
   const { observePage } = useLongStripPageTracking({
     enabled: isLongStrip,
+    root:longStripScrollContainer,
     onPageChange: setCurrentPageFromTracking,
   });
 
@@ -315,7 +319,9 @@ function ReaderPageContent({
    * Loading state
    * ---------------------------------------------------------
    */
-
+  useEffect(()=>{
+    console.log("CURRENT PAGE", currentPage +1)
+  },[currentPage])
 
   if (pagesQuery.isPending) {
     return (
@@ -436,6 +442,9 @@ function ReaderPageContent({
             renderAhead={RENDER_AHEAD}
             observePage={observePage}
             targetPage={targetPage}
+            onScrollContainerReady={
+              setLongStripScrollContainer
+            }
           />
         ) : (
           <SinglePageReader

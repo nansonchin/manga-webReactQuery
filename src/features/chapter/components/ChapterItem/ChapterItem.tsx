@@ -30,7 +30,7 @@ function ChapterItem({
 
   return (
     <Link
-      to={`/manga/mangaId/chapter/${chapter.id}`}
+      to={`/manga/${mangaId}/chapter/${chapter.id}`}
       className="chapter-link"
       {...hoverProps}
     >

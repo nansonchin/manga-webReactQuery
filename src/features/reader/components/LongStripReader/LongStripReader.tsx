@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { useLongStripVirtualizer } from "../../hooks/useLongStripVirtualizer";
 import ReaderImage from "../ReaderImage/ReaderImage";
 import "./LongStripReader.scss";
@@ -15,6 +16,7 @@ type LongStripReaderProps = {
   renderAhead: number;
   targetPage: number | null;
   observePage: (element: HTMLElement | null) => void;
+  onScrollContainerReady:(element:HTMLElement|null)=>void;
 };
 
 
@@ -24,18 +26,24 @@ function LongStripReader({
   renderAhead,
   targetPage,
   observePage,
+  onScrollContainerReady,
 }: LongStripReaderProps) {
   const { parentRef, virtualizer } = useLongStripVirtualizer({
     count: pages.length,
   });
 
-
   const virtualItems = virtualizer.getVirtualItems();
 
+  useEffect(()=>{
+    onScrollContainerReady(parentRef.current)
+  },[parentRef])
 
   return (
     <section
-      ref={parentRef}
+      ref={(element)=>{
+        parentRef.current = element
+        onScrollContainerReady(element)
+      }}
       className="reader-long-strip"
       aria-label="Long strip reader"
     >

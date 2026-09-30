@@ -28,8 +28,8 @@ export function useReaderPreload(
       void preloadImage(page.url);
 
       // loadedImages.current.add(page.url);
-      console.log("preload", page.url);
-      console.log(currentPage,nextPages.map(p=>p.index))
+      // console.log("preload", page.url);
+      // console.log(currentPage,nextPages.map(p=>p.index))
     });
   }, [pages, currentPage, preloadCount]);
 }
