@@ -1,8 +1,12 @@
-import { useEffect, useState } from "react";
-import { useLongStripVirtualizer } from "../../hooks/useLongStripVirtualizer";
+import type {
+  ReactVirtualizer,
+} from "@tanstack/react-virtual";
+
+
 import ReaderImage from "../ReaderImage/ReaderImage";
+
+
 import "./LongStripReader.scss";
-import type { ReactVirtualizer, Virtualizer } from "@tanstack/react-virtual";
 
 
 type ReaderPageData = {
@@ -13,13 +17,28 @@ type ReaderPageData = {
 
 type LongStripReaderProps = {
   pages: ReaderPageData[];
+
+
   currentPage: number;
+
+
   renderAhead: number;
-  // targetPage: number | null;
-  observePage: (element: HTMLElement | null) => void;
-  onScrollContainerReady:(element:HTMLElement|null)=>void;
-  parentRef:React.RefObject<HTMLElement|null>;
-  virtualizer: ReactVirtualizer<HTMLElement, Element>
+
+
+  parentRef: React.RefObject<
+    HTMLElement | null
+  >;
+
+
+  virtualizer: ReactVirtualizer<
+    HTMLElement,
+    Element
+  >;
+
+
+  onScrollContainerReady: (
+    element: HTMLElement | null
+  ) => void;
 };
 
 
@@ -27,27 +46,30 @@ function LongStripReader({
   pages,
   currentPage,
   renderAhead,
-  // targetPage,
-  observePage,
-  onScrollContainerReady,
   parentRef,
-  virtualizer
+  virtualizer,
+  onScrollContainerReady,
 }: LongStripReaderProps) {
-  // const { parentRef, virtualizer } = useLongStripVirtualizer({
-  //   count: pages.length,
-  // });
+  const virtualItems =
+    virtualizer.getVirtualItems();
 
-  const virtualItems = virtualizer.getVirtualItems();
-
-  // useEffect(()=>{
-  //   onScrollContainerReady(parentRef.current)
-  // },[parentRef])
 
   return (
     <section
-      ref={(element)=>{
-        parentRef.current = element
-        onScrollContainerReady(element)
+      ref={(element) => {
+        /**
+         * 给 TanStack Virtualizer。
+         */
+        parentRef.current =
+          element;
+
+
+        /**
+         * 给 tracking。
+         */
+        onScrollContainerReady(
+          element
+        );
       }}
       className="reader-long-strip"
       aria-label="Long strip reader"
@@ -58,62 +80,63 @@ function LongStripReader({
           height: `${virtualizer.getTotalSize()}px`,
         }}
       >
-        {virtualItems.map((virtualItem) => {
-          const page = pages[virtualItem.index];
+        {virtualItems.map(
+          (virtualItem) => {
+            const page =
+              pages[
+                virtualItem.index
+              ];
 
 
-          if (!page) {
-            return null;
-          }
+            if (!page) {
+              return null;
+            }
 
 
-          const distanceFromCurrentPage = Math.abs(
-            page.index - currentPage
-          );
+            const distanceFromCurrentPage =
+              Math.abs(
+                page.index -
+                  currentPage
+              );
 
 
-          const isNearCurrentPage =
-            distanceFromCurrentPage <= renderAhead;
+            const isNearCurrentPage =
+              distanceFromCurrentPage <=
+              renderAhead;
 
 
-          // const isTargetPage =
-          //   targetPage !== null &&
-          //   page.index === targetPage;
-
-
-          const shouldLoad =
-            isNearCurrentPage;
-
-
-          return (
-            <div
-              key={page.index}
-              className="reader-long-strip__page"
-              data-page={page.index + 1}
-              data-index={virtualItem.index}
-              ref={(element) => {
-                if (!element) {
-                  return;
+            return (
+              <div
+                key={page.index}
+                className="reader-long-strip__page"
+                data-page={
+                  page.index + 1
                 }
-
-
-                virtualizer.measureElement(element);
-                observePage(element);
-              }}
-              style={{
-                transform: `translateY(${virtualItem.start}px)`,
-              }}
-            >
-              <div className="reader-long-strip__page-inner">
-                <ReaderImage
-                  src={page.url}
-                  alt={`Page ${page.index + 1}`}
-                  shouldLoad={shouldLoad}
-                />
+                data-index={
+                  virtualItem.index
+                }
+                ref={
+                  virtualizer.measureElement
+                }
+                style={{
+                  transform: `translateY(${virtualItem.start}px)`,
+                }}
+              >
+                <div className="reader-long-strip__page-inner">
+                  <ReaderImage
+                    src={page.url}
+                    alt={`Page ${
+                      page.index + 1
+                    }`}
+                    shouldLoad={
+                      isNearCurrentPage
+                    }
+                  />
+                </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          }
+        )}
       </div>
     </section>
   );
@@ -121,6 +144,8 @@ function LongStripReader({
 
 
 export default LongStripReader;
+
+
 
 
 

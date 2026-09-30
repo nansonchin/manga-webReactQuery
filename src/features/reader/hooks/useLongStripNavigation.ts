@@ -1,8 +1,14 @@
 import {
   useCallback,
   useEffect,
+  useRef,
   useState,
 } from "react";
+
+
+import type {
+  Virtualizer,
+} from "@tanstack/react-virtual";
 
 
 type UseLongStripNavigationProps = {
@@ -11,42 +17,111 @@ type UseLongStripNavigationProps = {
 
 
   /**
-   * 当程序主动跳页完成以后，
-   * 通知外面的 currentPage 更新。
+   * TanStack Virtualizer。
+   *
+   * 真正负责 Long Strip scroll。
    */
-  onPageChange: (page: number) => void;
+  virtualizer: Virtualizer<
+    HTMLElement,
+    Element
+  >;
+
+
+  /**
+   * 程序导航成功以后，
+   * 更新 Reader 的 currentPage。
+   */
+  onPageChange: (
+    page: number
+  ) => void;
+
+
+  /**
+   * 告诉 tracking：
+   *
+   * true  = 程序正在导航
+   * false = 用户可以重新控制 currentPage
+   */
+  setProgrammaticNavigation?: (
+    value: boolean
+  ) => void;
 };
 
 
 export function useLongStripNavigation({
   currentPage,
   totalPages,
+  virtualizer,
   onPageChange,
+  setProgrammaticNavigation,
 }: UseLongStripNavigationProps) {
   /**
-   * 当前需要滚动到的目标页面。
+   * ---------------------------------------------------------
+   * targetPage
+   * ---------------------------------------------------------
    *
-   * 注意：
+   * 只是方便外部 debug / restore。
    *
-   * currentPage 是“现在页面”
-   *
-   * targetPage 是“我要去哪里”
+   * 真正 scroll 不再依赖这个 state。
    */
-  const [targetPage, setTargetPage] =
-    useState<number | null>(null);
+  const [
+    targetPage,
+    setTargetPage,
+  ] = useState<number | null>(
+    null
+  );
 
 
   /**
-   * 把 page 限制在合法范围。
+   * ---------------------------------------------------------
+   * current page ref
+   * ---------------------------------------------------------
    *
-   * 例如：
+   * 非常重要。
    *
-   * totalPages = 10
+   * React state update 是 asynchronous。
    *
-   * -1  -> 0
-   * 0   -> 0
-   * 5   -> 5
-   * 20  -> 9
+   * 如果用户连续快速点击：
+   *
+   * currentPage = 5
+   *
+   * click next
+   * click next
+   *
+   * 第二次 click 可能还拿到旧的 currentPage = 5。
+   *
+   * 所以这里另外保存最新 page。
+   */
+  const currentPageRef =
+    useRef(currentPage);
+
+
+  /**
+   * React currentPage 改变时，
+   * 同步 ref。
+   */
+  useEffect(() => {
+    currentPageRef.current =
+      currentPage;
+  }, [currentPage]);
+
+
+  /**
+   * ---------------------------------------------------------
+   * Unlock timer
+   * ---------------------------------------------------------
+   *
+   * 程序 scroll 完以后，
+   * 延迟一点再允许 tracking 控制 currentPage。
+   */
+  const unlockTimerRef =
+    useRef<number | null>(null);
+
+
+  /**
+   * ---------------------------------------------------------
+   * clamp
+   * ---------------------------------------------------------
    */
   const clampPage = useCallback(
     (page: number) => {
@@ -56,7 +131,10 @@ export function useLongStripNavigation({
 
 
       return Math.min(
-        Math.max(page, 0),
+        Math.max(
+          page,
+          0
+        ),
         totalPages - 1
       );
     },
@@ -65,20 +143,105 @@ export function useLongStripNavigation({
 
 
   /**
-   * 请求跳到指定页面。
+   * ---------------------------------------------------------
+   * 清除 unlock timer
+   * ---------------------------------------------------------
+   */
+  const clearUnlockTimer =
+    useCallback(() => {
+      if (
+        unlockTimerRef.current !==
+        null
+      ) {
+        window.clearTimeout(
+          unlockTimerRef.current
+        );
+
+
+        unlockTimerRef.current =
+          null;
+      }
+    }, []);
+
+
+  /**
+   * ---------------------------------------------------------
+   * 开始程序导航
+   * ---------------------------------------------------------
+   */
+  const startProgrammaticNavigation =
+    useCallback(() => {
+      clearUnlockTimer();
+
+
+      /**
+       * 暂时禁止 tracking 改 currentPage。
+       */
+      setProgrammaticNavigation?.(
+        true
+      );
+
+
+      /**
+       * 最后一次 scroll event
+       * 发生以后约 150ms 再解除 lock。
+       *
+       * 为什么不是马上 false？
+       *
+       * 因为：
+       *
+       * scrollToIndex()
+       *
+       * 会改变 scrollTop。
+       *
+       * scrollTop 改变会触发 tracking。
+       */
+      const unlock =
+        () => {
+          unlockTimerRef.current =
+            null;
+
+
+          setProgrammaticNavigation?.(
+            false
+          );
+        };
+
+
+      unlockTimerRef.current =
+        window.setTimeout(
+          unlock,
+          180
+        );
+    }, [
+      clearUnlockTimer,
+      setProgrammaticNavigation,
+    ]);
+
+
+  /**
+   * ---------------------------------------------------------
+   * requestScrollToPage
+   * ---------------------------------------------------------
    *
-   * 这个 function 本身不直接 scroll。
+   * 这是整个 Long Strip 的核心。
    *
-   * 它只是：
+   * 以前：
    *
-   * targetPage = 某一页
+   * querySelector()
+   * +
+   * scrollIntoView()
    *
-   * 然后 useEffect 再负责真正操作 DOM。
+   * 现在：
+   *
+   * virtualizer.scrollToIndex()
    */
   const requestScrollToPage =
     useCallback(
       (page: number) => {
-        if (totalPages <= 0) {
+        if (
+          totalPages <= 0
+        ) {
           return;
         }
 
@@ -87,117 +250,110 @@ export function useLongStripNavigation({
           clampPage(page);
 
 
-        setTargetPage(safePage);
+        /**
+         * 已经是当前页，
+         * 不需要重复 scroll。
+         */
+        if (
+          safePage ===
+          currentPageRef.current
+        ) {
+          return;
+        }
+
+
+        /**
+         * 保存最新目标。
+         */
+        currentPageRef.current =
+          safePage;
+
+
+        setTargetPage(
+          safePage
+        );
+
+
+        /**
+         * 告诉 tracking：
+         *
+         * 接下来这个 scroll 是程序产生的。
+         */
+        startProgrammaticNavigation();
+
+
+        /**
+         * ---------------------------------------------------
+         * 关键：
+         *
+         * 不再：
+         *
+         * document.querySelector()
+         *
+         * 不再：
+         *
+         * element.scrollIntoView()
+         *
+         * 而是直接使用 TanStack Virtualizer。
+         *
+         * 即使 target page 当前还没有 render，
+         * Virtualizer 也可以根据 index 找到它。
+         * ---------------------------------------------------
+         */
+        virtualizer.scrollToIndex(
+          safePage,
+          {
+            align: "start",
+            behavior: "auto",
+          }
+        );
+
+
+        /**
+         * 程序导航自己更新 currentPage。
+         *
+         * 不等待 IntersectionObserver。
+         */
+        onPageChange(
+          safePage
+        );
+
+
+        /**
+         * request 已经处理。
+         */
+        setTargetPage(null);
       },
       [
         clampPage,
+        onPageChange,
+        startProgrammaticNavigation,
         totalPages,
+        virtualizer,
       ]
     );
 
 
   /**
-   * targetPage 改变以后，
-   * 真正执行 scroll。
-   */
-  useEffect(() => {
-    /**
-     * 没有目标，不做任何事情。
-     */
-    if (targetPage === null) {
-      return;
-    }
-
-
-    /**
-     * 找到对应页面。
-     *
-     * data-page 是 1-based。
-     *
-     * targetPage 是 0-based。
-     *
-     * 所以：
-     *
-     * targetPage = 4
-     *
-     * data-page = 5
-     */
-    const element =
-      document.querySelector<HTMLElement>(
-        `[data-page="${
-          targetPage + 1
-        }"]`
-      );
-
-
-    /**
-     * Virtualizer 目前还没有把这个 page
-     * render 到 DOM。
-     *
-     * 这里先不要清掉 targetPage。
-     *
-     * 下一次 render 后 useEffect 会再次执行。
-     */
-    if (!element) {
-      return;
-    }
-
-
-    /**
-     * 找到目标 page。
-     *
-     * 直接滚动。
-     */
-    element.scrollIntoView({
-      behavior: "auto",
-      block: "start",
-    });
-
-
-    /**
-     * 非常重要：
-     *
-     * 程序主动 navigation 不应该等待
-     * IntersectionObserver 再决定 currentPage。
-     *
-     * 我们自己明确告诉 currentPage：
-     *
-     * “现在已经去 targetPage 了。”
-     */
-    onPageChange(targetPage);
-
-
-    /**
-     * target 已经处理完。
-     */
-    setTargetPage(null);
-  }, [
-    targetPage,
-    onPageChange,
-  ]);
-
-
-  /**
-   * 下一页。
-   *
-   * currentPage:
-   *
-   * 0 -> 1
-   * 1 -> 2
-   * 2 -> 3
+   * ---------------------------------------------------------
+   * Next page
+   * ---------------------------------------------------------
    */
   const scrollToNextPage =
     useCallback(() => {
-      if (totalPages <= 0) {
+      if (
+        totalPages <= 0
+      ) {
         return;
       }
 
 
-      /**
-       * 已经是最后一页。
-       */
+      const page =
+        currentPageRef.current;
+
+
       if (
-        currentPage >=
+        page >=
         totalPages - 1
       ) {
         return;
@@ -205,60 +361,75 @@ export function useLongStripNavigation({
 
 
       requestScrollToPage(
-        currentPage + 1
+        page + 1
       );
     }, [
-      currentPage,
-      totalPages,
       requestScrollToPage,
+      totalPages,
     ]);
 
 
   /**
-   * 上一页。
-   *
-   * currentPage:
-   *
-   * 5 -> 4
-   * 4 -> 3
-   * 3 -> 2
+   * ---------------------------------------------------------
+   * Previous page
+   * ---------------------------------------------------------
    */
   const scrollToPreviousPage =
     useCallback(() => {
-      if (totalPages <= 0) {
+      if (
+        totalPages <= 0
+      ) {
         return;
       }
 
 
-      /**
-       * 已经第一页。
-       */
-      if (currentPage <= 0) {
+      const page =
+        currentPageRef.current;
+
+
+      if (page <= 0) {
         return;
       }
 
 
       requestScrollToPage(
-        currentPage - 1
+        page - 1
       );
     }, [
-      currentPage,
-      totalPages,
       requestScrollToPage,
+      totalPages,
     ]);
+
+
+  /**
+   * ---------------------------------------------------------
+   * Cleanup
+   * ---------------------------------------------------------
+   */
+  useEffect(() => {
+    return () => {
+      clearUnlockTimer();
+
+
+      setProgrammaticNavigation?.(
+        false
+      );
+    };
+  }, [
+    clearUnlockTimer,
+    setProgrammaticNavigation,
+  ]);
 
 
   return {
     targetPage,
-
-
     requestScrollToPage,
-
-
     scrollToNextPage,
-
-
     scrollToPreviousPage,
   };
 }
+
+
+
+
 

@@ -15,13 +15,45 @@
 }
 
 
+
+
+/* =========================================================
+   IMAGE WRAPPER
+========================================================= */
+
+
+.reader-image-wrapper {
+  position: relative;
+
+
+  width: 100%;
+
+
+  /*
+   * Manga pages are normally 720 x 1080.
+   *
+   * This gives the Virtualizer a stable height
+   * before the actual image finishes loading.
+   */
+  aspect-ratio: 720 / 1080;
+
+
+  overflow: hidden;
+
+
+  background: #0d0d0d;
+}
+
+
+
+
 /* =========================================================
    PLACEHOLDER
-   ========================================================= */
+========================================================= */
 
 
 .reader-image--placeholder {
-  min-height: 240px;
+  width: 100%;
 
 
   background:
@@ -34,18 +66,19 @@
 }
 
 
+
+
 .reader-image__placeholder {
   width: 100%;
   height: 100%;
-
-
-  min-height: 240px;
 }
+
+
 
 
 /* =========================================================
    IMAGE
-   ========================================================= */
+========================================================= */
 
 
 .reader-image__img {
@@ -53,16 +86,27 @@
 
 
   width: 100%;
-  height: auto;
+  height: 100%;
 
 
   max-width: 100%;
+
+
+  /*
+   * Do not crop manga.
+   */
+  object-fit: contain;
+
+
+  object-position: center;
 
 
   opacity: 0;
 
 
   user-select: none;
+
+
   -webkit-user-drag: none;
 
 
@@ -72,23 +116,31 @@
 }
 
 
-/*
- * Image loaded
- */
 
 
-.reader-image--loaded .reader-image__img {
+/* =========================================================
+   IMAGE LOADED
+========================================================= */
+
+
+.reader-image--loaded
+  .reader-image__img {
   opacity: 1;
+
+
   filter: none;
 }
 
 
-/*
- * Image loading
- */
 
 
-.reader-image--loading .reader-image__img {
+/* =========================================================
+   IMAGE LOADING
+========================================================= */
+
+
+.reader-image--loading
+  .reader-image__img {
   opacity: 0;
 
 
@@ -96,9 +148,11 @@
 }
 
 
+
+
 /* =========================================================
    SKELETON
-   ========================================================= */
+========================================================= */
 
 
 .reader-image__skeleton {
@@ -123,6 +177,7 @@
     );
 }
 
+
 .reader-image__skeleton-shine {
   position: absolute;
 
@@ -141,9 +196,24 @@
     linear-gradient(
       90deg,
       transparent,
-      rgba(205, 169, 65, 0.035),
-      rgba(255, 224, 135, 0.055),
-      rgba(205, 169, 65, 0.035),
+      rgba(
+        205,
+        169,
+        65,
+        0.035
+      ),
+      rgba(
+        255,
+        224,
+        135,
+        0.055
+      ),
+      rgba(
+        205,
+        169,
+        65,
+        0.035
+      ),
       transparent
     );
 
@@ -151,8 +221,14 @@
   transform: skewX(-15deg);
 
 
-  animation: reader-image-skeleton-shine 1.8s ease-in-out infinite;
+  animation:
+    reader-image-skeleton-shine
+    1.8s
+    ease-in-out
+    infinite;
 }
+
+
 
 
 @keyframes reader-image-skeleton-shine {
@@ -167,14 +243,20 @@
 }
 
 
+
+
 /* =========================================================
    ERROR
-   ========================================================= */
+========================================================= */
 
 
 .reader-image--error {
   display: flex;
+
+
   align-items: center;
+
+
   justify-content: center;
 
 
@@ -190,15 +272,24 @@
   background:
     radial-gradient(
       circle at center,
-      rgba(194, 157, 45, 0.055),
+      rgba(
+        194,
+        157,
+        45,
+        0.055
+      ),
       transparent 55%
     ),
     #101010;
 }
 
 
+
+
 .reader-image__error {
   display: flex;
+
+
   align-items: center;
 
 
@@ -211,17 +302,39 @@
   padding: 18px 20px;
 
 
-  border: 1px solid rgba(194, 157, 45, 0.18);
+  border:
+    1px solid
+    rgba(
+      194,
+      157,
+      45,
+      0.18
+    );
+
+
   border-radius: 12px;
 
 
   background:
-    rgba(255, 255, 255, 0.025);
+    rgba(
+      255,
+      255,
+      255,
+      0.025
+    );
 
 
   box-shadow:
-    0 12px 36px rgba(0, 0, 0, 0.28);
+    0 12px 36px
+    rgba(
+      0,
+      0,
+      0,
+      0.28
+    );
 }
+
+
 
 
 .reader-image__error-mark {
@@ -233,11 +346,24 @@
 
 
   display: flex;
+
+
   align-items: center;
+
+
   justify-content: center;
 
 
-  border: 1px solid rgba(211, 174, 61, 0.5);
+  border:
+    1px solid
+    rgba(
+      211,
+      174,
+      61,
+      0.5
+    );
+
+
   border-radius: 50%;
 
 
@@ -245,8 +371,12 @@
 
 
   font-size: 14px;
+
+
   font-weight: 700;
 }
+
+
 
 
 .reader-image__error-content {
@@ -254,11 +384,15 @@
 }
 
 
+
+
 .reader-image__error-title {
   color: #eee9dc;
 
 
   font-size: 14px;
+
+
   font-weight: 600;
 
 
@@ -266,39 +400,74 @@
 }
 
 
+
+
 .reader-image__error-description {
   margin-top: 4px;
 
 
-  color: rgba(255, 255, 255, 0.42);
+  color:
+    rgba(
+      255,
+      255,
+      255,
+      0.42
+    );
 
 
   font-size: 12px;
+
+
   line-height: 1.5;
 }
 
 
+
+
 /* =========================================================
    DARK READER
-   ========================================================= */
+========================================================= */
 
 
-.reader-dark .reader-image {
+.reader-dark
+  .reader-image {
   background: #0b0b0b;
 }
 
 
+
+
+.reader-dark
+  .reader-image-wrapper {
+  background: #0b0b0b;
+}
+
+
+
+
 /* =========================================================
    LIGHT READER
-   ========================================================= */
+========================================================= */
 
 
-.reader-light .reader-image {
+.reader-light
+  .reader-image {
   background: #f1efe9;
 }
 
 
-.reader-light .reader-image__skeleton {
+
+
+.reader-light
+  .reader-image-wrapper {
+  background: #f1efe9;
+}
+
+
+
+
+.reader-light
+  .reader-image__skeleton {
   background:
     linear-gradient(
       135deg,
@@ -309,68 +478,119 @@
 }
 
 
-.reader-light .reader-image__skeleton-shine {
+
+
+.reader-light
+  .reader-image__skeleton-shine {
   background:
     linear-gradient(
       90deg,
       transparent,
-      rgba(194, 157, 45, 0.025),
-      rgba(255, 255, 255, 0.35),
-      rgba(194, 157, 45, 0.025),
+      rgba(
+        194,
+        157,
+        45,
+        0.025
+      ),
+      rgba(
+        255,
+        255,
+        255,
+        0.35
+      ),
+      rgba(
+        194,
+        157,
+        45,
+        0.025
+      ),
       transparent
     );
 }
 
 
-.reader-light .reader-image--error {
+
+
+.reader-light
+  .reader-image--error {
   background:
     radial-gradient(
       circle at center,
-      rgba(194, 157, 45, 0.06),
+      rgba(
+        194,
+        157,
+        45,
+        0.06
+      ),
       transparent 55%
     ),
     #ebe9e3;
 }
 
 
-.reader-light .reader-image__error {
-  border-color: rgba(80, 67, 34, 0.15);
 
 
-  background: rgba(255, 255, 255, 0.6);
+.reader-light
+  .reader-image__error {
+  border-color:
+    rgba(
+      80,
+      67,
+      34,
+      0.15
+    );
+
+
+  background:
+    rgba(
+      255,
+      255,
+      255,
+      0.6
+    );
 
 
   box-shadow:
-    0 12px 30px rgba(0, 0, 0, 0.08);
+    0 12px 30px
+    rgba(
+      0,
+      0,
+      0,
+      0.08
+    );
 }
 
 
-.reader-light .reader-image__error-title {
+
+
+.reader-light
+  .reader-image__error-title {
   color: #24221e;
 }
 
 
-.reader-light .reader-image__error-description {
-  color: rgba(30, 28, 24, 0.5);
+
+
+.reader-light
+  .reader-image__error-description {
+  color:
+    rgba(
+      30,
+      28,
+      24,
+      0.5
+    );
 }
+
+
 
 
 /* =========================================================
    MOBILE
-   ========================================================= */
+========================================================= */
 
 
 @media (max-width: 600px) {
-  .reader-image--placeholder {
-    min-height: 180px;
-  }
-
-
-  .reader-image__placeholder {
-    min-height: 180px;
-  }
-
-
   .reader-image--error {
     min-height: 220px;
 
@@ -407,9 +627,11 @@
 }
 
 
+
+
 /* =========================================================
    REDUCED MOTION
-   ========================================================= */
+========================================================= */
 
 
 @media (prefers-reduced-motion: reduce) {

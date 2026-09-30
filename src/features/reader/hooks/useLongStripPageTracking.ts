@@ -5,63 +5,64 @@ import {
 } from "react";
 
 
+import type {
+  Virtualizer,
+} from "@tanstack/react-virtual";
+
+
 type UseLongStripPageTrackingProps = {
   /**
-   * 是否启用 tracking。
-   *
-   * Long Strip = true
-   * Single Page = false
+   * Long Strip 是否开启。
    */
   enabled: boolean;
 
 
   /**
-   * Long Strip 的 scroll container。
+   * Long Strip scroll container。
    */
   root: HTMLElement | null;
 
 
   /**
-   * 找到当前 page 后，
+   * TanStack Virtualizer。
+   */
+  virtualizer: Virtualizer<
+    HTMLElement,
+    Element
+  >;
+
+
+  /**
+   * 当前 page 改变以后，
    * 通知 ReaderPage。
    */
-  onPageChange: (page: number) => void;
+  onPageChange: (
+    page: number
+  ) => void;
 };
 
 
 export function useLongStripPageTracking({
   enabled,
   root,
+  virtualizer,
   onPageChange,
 }: UseLongStripPageTrackingProps) {
   /**
-   * 保存 IntersectionObserver。
+   * ---------------------------------------------------------
+   * 防止重复 requestAnimationFrame
+   * ---------------------------------------------------------
    */
-  const observerRef =
-    useRef<IntersectionObserver | null>(
+  const rafRef =
+    useRef<number | null>(
       null
     );
 
 
   /**
-   * 当前正在 viewport 中的页面。
-   *
-   * Element -> page number
-   *
-   * 例如：
-   *
-   * Page DOM A -> 4
-   * Page DOM B -> 5
-   * Page DOM C -> 6
-   */
-  const visiblePagesRef =
-    useRef<Map<Element, number>>(
-      new Map()
-    );
-
-
-  /**
-   * 上一次已经通知出去的 page。
+   * ---------------------------------------------------------
+   * 上一次 page
+   * ---------------------------------------------------------
    *
    * 防止：
    *
@@ -73,142 +74,176 @@ export function useLongStripPageTracking({
    * 一直 setState。
    */
   const lastPageRef =
-    useRef<number | null>(null);
+    useRef<number | null>(
+      null
+    );
 
 
   /**
-   * 根据目前 viewport 中的 pages，
-   * 找出距离 viewport 中心最近的 page。
+   * ---------------------------------------------------------
+   * Programmatic navigation lock
+   * ---------------------------------------------------------
+   *
+   * true：
+   * button / keyboard 正在主动 navigation。
+   *
+   * false：
+   * 用户正常 scroll。
+   */
+  const programmaticNavigationRef =
+    useRef(false);
+
+
+  /**
+   * ---------------------------------------------------------
+   * 外部控制 programmatic navigation
+   * ---------------------------------------------------------
+   */
+  const setProgrammaticNavigation =
+    useCallback(
+      (value: boolean) => {
+        programmaticNavigationRef.current =
+          value;
+      },
+      []
+    );
+
+
+  /**
+   * ---------------------------------------------------------
+   * 找 current page
+   * ---------------------------------------------------------
+   *
+   * 不再使用 IntersectionObserver。
+   *
+   * 我们直接使用 VirtualItem：
+   *
+   * item.start
+   * item.end
+   *
+   * 来判断 viewport center 落在哪一页。
    */
   const updateCurrentPage =
     useCallback(() => {
-      /**
-       * 没有 root。
-       */
+      if (!enabled) {
+        return;
+      }
+
+
       if (!root) {
         return;
       }
 
 
       /**
-       * 没有 visible page。
+       * 程序 navigation 时，
+       * 不允许 tracking 抢 currentPage。
        */
       if (
-        visiblePagesRef.current.size ===
-        0
+        programmaticNavigationRef.current
       ) {
         return;
       }
 
 
       /**
-       * scroll container 的位置。
-       */
-      const rootRect =
-        root.getBoundingClientRect();
-
-
-      /**
-       * viewport 中心。
+       * 当前 viewport center。
+       *
+       * scrollTop 是整个 Long Strip
+       * 的 scroll position。
        */
       const viewportCenter =
-        rootRect.top +
-        rootRect.height / 2;
+        root.scrollTop +
+        root.clientHeight / 2;
 
 
       /**
-       * 当前最近的 page。
+       * 当前 virtual items。
        */
-      let closestPage: number | null =
-        null;
+      const virtualItems =
+        virtualizer.getVirtualItems();
 
 
-      /**
-       * 最近距离。
-       */
+      if (
+        virtualItems.length === 0
+      ) {
+        return;
+      }
+
+
+      let closestIndex =
+        virtualItems[0].index;
+
+
       let closestDistance =
         Infinity;
 
 
       /**
-       * 遍历所有 visible pages。
+       * 找 viewport center
+       * 最近的 page。
        */
-      visiblePagesRef.current.forEach(
-        (page, element) => {
-          /**
-           * page 的位置。
-           */
-          const rect =
-            element.getBoundingClientRect();
-
-
-          /**
-           * page 中心。
-           */
-          const pageCenter =
-            rect.top +
-            rect.height / 2;
-
-
-          /**
-           * page center 距离 viewport center。
-           */
-          const distance =
-            Math.abs(
-              pageCenter -
-                viewportCenter
-            );
-
-
-          /**
-           * 找最近的 page。
-           */
-          if (
-            distance <
-            closestDistance
-          ) {
-            closestDistance =
-              distance;
-
-
-            closestPage =
-              page;
-          }
-        }
-      );
-
-
-      /**
-       * 没找到。
-       */
-      if (
-        closestPage === null
+      for (
+        const item of virtualItems
       ) {
-        return;
+        /**
+         * 如果 viewport center
+         * 正好落在 page 内，
+         * 这个就是 current page。
+         */
+        if (
+          viewportCenter >=
+            item.start &&
+          viewportCenter <
+            item.end
+        ) {
+          closestIndex =
+            item.index;
+
+
+          closestDistance = 0;
+
+
+          break;
+        }
+
+
+        /**
+         * 如果 center 不在任何 page，
+         * 就找距离 page center 最近的。
+         */
+        const itemCenter =
+          item.start +
+          item.size / 2;
+
+
+        const distance =
+          Math.abs(
+            itemCenter -
+              viewportCenter
+          );
+
+
+        if (
+          distance <
+          closestDistance
+        ) {
+          closestDistance =
+            distance;
+
+
+          closestIndex =
+            item.index;
+        }
       }
 
 
       /**
-       * data-page 是 1-based。
-       *
-       * currentPage 是 0-based。
-       *
-       * 所以：
-       *
-       * data-page = 5
-       *
-       * currentPage = 4
-       */
-      const nextPage =
-        closestPage - 1;
-
-
-      /**
-       * 没有变化。
+       * page 没变化。
        */
       if (
         lastPageRef.current ===
-        nextPage
+        closestIndex
       ) {
         return;
       }
@@ -218,228 +253,157 @@ export function useLongStripPageTracking({
        * 保存。
        */
       lastPageRef.current =
-        nextPage;
+        closestIndex;
 
 
       /**
-       * 通知外面。
+       * 更新 React state。
        */
-      onPageChange(nextPage);
+      onPageChange(
+        closestIndex
+      );
     }, [
-      root,
+      enabled,
       onPageChange,
+      root,
+      virtualizer,
     ]);
 
 
   /**
-   * 建立 IntersectionObserver。
+   * ---------------------------------------------------------
+   * Scroll handler
+   * ---------------------------------------------------------
+   *
+   * 用户 scroll 的时候：
+   *
+   * scroll event
+   *       ↓
+   * requestAnimationFrame
+   *       ↓
+   * updateCurrentPage()
+   *
+   * 不在 scroll event 中直接读取大量 layout。
+   */
+  const handleScroll =
+    useCallback(() => {
+      if (
+        rafRef.current !==
+        null
+      ) {
+        return;
+      }
+
+
+      rafRef.current =
+        window.requestAnimationFrame(
+          () => {
+            rafRef.current =
+              null;
+
+
+            updateCurrentPage();
+          }
+        );
+    }, [
+      updateCurrentPage,
+    ]);
+
+
+  /**
+   * ---------------------------------------------------------
+   * 建立 scroll listener
+   * ---------------------------------------------------------
    */
   useEffect(() => {
-    /**
-     * Single Page 不需要 observer。
-     */
     if (!enabled) {
       return;
     }
 
 
-    /**
-     * 没有 scroll container。
-     */
     if (!root) {
       return;
     }
 
 
     /**
-     * 清理旧 observer。
+     * 建立 listener。
      */
-    observerRef.current?.disconnect();
-
-
-    /**
-     * 清空旧数据。
-     */
-    visiblePagesRef.current.clear();
-
-
-    lastPageRef.current = null;
-
-
-    /**
-     * 创建新的 IntersectionObserver。
-     */
-    const observer =
-      new IntersectionObserver(
-        (entries) => {
-          /**
-           * 处理所有发生变化的 page。
-           */
-          entries.forEach(
-            (entry) => {
-              /**
-               * 从 DOM 拿 page number。
-               */
-              const page =
-                Number(
-                  entry.target.getAttribute(
-                    "data-page"
-                  )
-                );
-
-
-              /**
-               * 不是合法 page。
-               */
-              if (
-                !Number.isInteger(page)
-              ) {
-                return;
-              }
-
-
-              /**
-               * Page 进入 viewport。
-               */
-              if (
-                entry.isIntersecting
-              ) {
-                visiblePagesRef.current.set(
-                  entry.target,
-                  page
-                );
-              } else {
-                /**
-                 * Page 离开 viewport。
-                 */
-                visiblePagesRef.current.delete(
-                  entry.target
-                );
-              }
-            }
-          );
-
-
-          /**
-           * Observer 变化以后，
-           * 重新判断 currentPage。
-           */
-          updateCurrentPage();
-        },
-        {
-          /**
-           * 只观察 LongStrip container。
-           */
-          root,
-
-
-          /**
-           * 页面只要进入一点点就算 visible。
-           */
-          threshold: 0,
-
-
-          /**
-           * 这里先使用 0。
-           *
-           * 不再用 -40%。
-           */
-          rootMargin: "0px",
-        }
-      );
-
-
-    /**
-     * 保存 observer。
-     */
-    observerRef.current =
-      observer;
-
-
-    /**
-     * 找当前已经 render 的 pages。
-     */
-    const elements =
-      root.querySelectorAll<HTMLElement>(
-        "[data-page]"
-      );
-
-
-    /**
-     * 注册 observer。
-     */
-    elements.forEach(
-      (element) => {
-        observer.observe(element);
+    root.addEventListener(
+      "scroll",
+      handleScroll,
+      {
+        passive: true,
       }
     );
+
+
+    /**
+     * 页面第一次 render 后，
+     * 计算一次 currentPage。
+     */
+    const initialRaf =
+      window.requestAnimationFrame(
+        () => {
+          updateCurrentPage();
+        }
+      );
 
 
     /**
      * cleanup。
      */
     return () => {
-      observer.disconnect();
+      root.removeEventListener(
+        "scroll",
+        handleScroll
+      );
 
 
-      observerRef.current =
-        null;
+      window.cancelAnimationFrame(
+        initialRaf
+      );
 
 
-      visiblePagesRef.current.clear();
+      if (
+        rafRef.current !==
+        null
+      ) {
+        window.cancelAnimationFrame(
+          rafRef.current
+        );
 
 
-      lastPageRef.current = null;
+        rafRef.current =
+          null;
+      }
     };
   }, [
     enabled,
+    handleScroll,
     root,
     updateCurrentPage,
   ]);
 
 
   /**
-   * LongStripReader 每 render 一个 page，
-   * 就会调用这个 function。
+   * ---------------------------------------------------------
+   * Reset last page
+   * ---------------------------------------------------------
+   *
+   * 当 root / mode 改变以后，
+   * 重新允许计算。
    */
-  const observePage =
-    useCallback(
-      (
-        element: HTMLElement | null
-      ) => {
-        /**
-         * DOM 不存在。
-         */
-        if (!element) {
-          return;
-        }
-
-
-        /**
-         * 当前不是 LongStrip。
-         */
-        if (!enabled) {
-          return;
-        }
-
-
-        /**
-         * 注册这个 page。
-         */
-        observerRef.current?.observe(
-          element
-        );
-      },
-      [enabled]
-    );
+  useEffect(() => {
+    lastPageRef.current =
+      null;
+  }, [
+    enabled,
+    root,
+  ]);
 
 
   return {
-    observePage,
+    setProgrammaticNavigation,
   };
 }
-
-
-
-
-
