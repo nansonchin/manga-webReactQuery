@@ -1,6 +1,5 @@
 import { useParams } from "react-router-dom";
 
-
 import { useReaderData } from "../features/reader/hooks/useReaderData";
 import { useReaderPreload } from "../features/reader/hooks/useReaderPreload";
 import { useCurrentReaderPage } from "../features/reader/hooks/useCurrentReaderPage";
@@ -12,72 +11,54 @@ import { useKeyboardNavigation } from "../features/reader/hooks/useKeyboardNavig
 import { useReaderControls } from "../features/reader/hooks/useReaderControl";
 import useReaderToolbar from "../features/readerToolbar/hooks/useReaderToolbar";
 
-
 import LongStripReader from "../features/reader/components/LongStripReader/LongStripReader";
 import SinglePageReader from "../features/reader/components/SinglePageReader/SinglePageReader";
 
-
 import ReaderNavigation from "../features/readerNavigation/components/ReaderNavigation";
 import { useChapterNavigation } from "../features/readerNavigation/hooks/useChapterNavigation";
-
 
 import {
   ReaderSettingsProvider,
   useReaderSettings,
 } from "../features/readerSetting/context/ReaderSettingContext";
 
-
 import ReaderSettingsPanel from "../features/readerSetting/components/ReaderSettingsPanel";
-
 
 import { ReaderProgress } from "../features/readerProgress/components/ReaderProgress";
 
-
 import ReaderToolbar from "../features/readerToolbar/components/ReaderToolbar";
-
 
 import "./scss/ReaderPage.scss";
 import { useEffect, useState } from "react";
-
+import { useLongStripVirtualizer } from "../features/reader/hooks/useLongStripVirtualizer";
 
 const RENDER_AHEAD = 1;
 const PREFETCH_AHEAD = 3;
 
-
 function ReaderPage() {
   const { mangaId, chapterId } = useParams();
-
 
   if (!mangaId || !chapterId) {
     return <div>Invalid Reader URL</div>;
   }
 
-
   return (
     <ReaderSettingsProvider>
-      <ReaderPageContent
-        mangaId={mangaId}
-        chapterId={chapterId}
-      />
+      <ReaderPageContent mangaId={mangaId} chapterId={chapterId} />
     </ReaderSettingsProvider>
   );
 }
-
 
 type ReaderPageContentProps = {
   mangaId: string;
   chapterId: string;
 };
 
-
-function ReaderPageContent({
-  mangaId,
-  chapterId,
-}: ReaderPageContentProps) {
+function ReaderPageContent({ mangaId, chapterId }: ReaderPageContentProps) {
   const { settings } = useReaderSettings();
 
-  const [longStripScrollContainer, setLongStripScrollContainer] = useState<HTMLElement|null>(null)
-
+  const [longStripScrollContainer, setLongStripScrollContainer] =
+    useState<HTMLElement | null>(null);
 
   /**
    * ---------------------------------------------------------
@@ -85,20 +66,12 @@ function ReaderPageContent({
    * ---------------------------------------------------------
    */
 
-
-  const {
-    pages,
-    chapters,
-    pagesQuery,
-    chaptersQuery,
-  } = useReaderData({
+  const { pages, chapters, pagesQuery, chaptersQuery } = useReaderData({
     mangaId,
     chapterId,
   });
 
-
   const totalPages = pages.length;
-
 
   /**
    * ---------------------------------------------------------
@@ -106,16 +79,13 @@ function ReaderPageContent({
    * ---------------------------------------------------------
    */
 
-
   const isLongStrip = settings.pageMode === "long-strip";
-
 
   /**
    * ---------------------------------------------------------
    * Chapter navigation
    * ---------------------------------------------------------
    */
-
 
   const {
     hasNext,
@@ -129,19 +99,15 @@ function ReaderPageContent({
     currentChapterId: chapterId,
     hasMoreChapters: chaptersQuery.hasNextPage ?? false,
     fetchNextPage: chaptersQuery.fetchNextPage,
-    isLoadingMoreChapters:
-      chaptersQuery.isFetchingNextPage,
-    isFetchNextPageError:
-      chaptersQuery.isFetchNextPageError,
+    isLoadingMoreChapters: chaptersQuery.isFetchingNextPage,
+    isFetchNextPageError: chaptersQuery.isFetchNextPageError,
   });
-
 
   /**
    * ---------------------------------------------------------
    * Current page
    * ---------------------------------------------------------
    */
-
 
   const {
     currentPage,
@@ -154,24 +120,22 @@ function ReaderPageContent({
     totalPages,
   });
 
-
   /**
    * ---------------------------------------------------------
    * Progress persistence
    * ---------------------------------------------------------
    */
 
-
-  const {
-    restoredPage,
-    hasRestored,
-  } = useReaderProgressPersistence({
+  const { parentRef: longStripParentRef, virtualizer } =
+    useLongStripVirtualizer({
+      count: totalPages,
+    });
+  const { restoredPage, hasRestored } = useReaderProgressPersistence({
     mangaId,
     chapterId,
     currentPage,
     totalPages,
   });
-
 
   /**
    * ---------------------------------------------------------
@@ -179,17 +143,16 @@ function ReaderPageContent({
    * ---------------------------------------------------------
    */
 
-
   const {
-    targetPage,
+    // targetPage,
     scrollToNextPage,
     scrollToPreviousPage,
     requestScrollToPage,
   } = useLongStripNavigation({
     currentPage,
     totalPages,
+    virtualizer
   });
-
 
   /**
    * ---------------------------------------------------------
@@ -197,13 +160,11 @@ function ReaderPageContent({
    * ---------------------------------------------------------
    */
 
-
   const { observePage } = useLongStripPageTracking({
     enabled: isLongStrip,
-    root:longStripScrollContainer,
+    root: longStripScrollContainer,
     onPageChange: setCurrentPageFromTracking,
   });
-
 
   /**
    * ---------------------------------------------------------
@@ -211,13 +172,7 @@ function ReaderPageContent({
    * ---------------------------------------------------------
    */
 
-
-  useReaderPreload(
-    pages,
-    currentPage,
-    PREFETCH_AHEAD
-  );
-
+  useReaderPreload(pages, currentPage, PREFETCH_AHEAD);
 
   /**
    * ---------------------------------------------------------
@@ -225,28 +180,17 @@ function ReaderPageContent({
    * ---------------------------------------------------------
    */
 
+  const nextPage = isLongStrip ? scrollToNextPage : goToNextPage;
 
-  const nextPage = isLongStrip
-    ? scrollToNextPage
-    : goToNextPage;
+  const previousPage = isLongStrip ? scrollToPreviousPage : goToPreviousPage;
 
-
-  const previousPage = isLongStrip
-    ? scrollToPreviousPage
-    : goToPreviousPage;
-
-
-  const goToReaderPage = isLongStrip
-    ? requestScrollToPage
-    : goToPage;
-
+  const goToReaderPage = isLongStrip ? requestScrollToPage : goToPage;
 
   /**
    * ---------------------------------------------------------
    * Restore reader position
    * ---------------------------------------------------------
    */
-
 
   useReaderRestorePosition({
     restoredPage,
@@ -256,30 +200,24 @@ function ReaderPageContent({
     requestScrollToPage,
   });
 
-
   /**
    * ---------------------------------------------------------
    * Reader controls
    * ---------------------------------------------------------
    */
 
-
   const controls = useReaderControls({
     currentPage,
     totalPages,
 
-
     nextChapter: goNextChapter,
     previousChapter: goPreviousChapter,
-
 
     nextPage,
     previousPage,
 
-
     goToPage: goToReaderPage,
   });
-
 
   /**
    * ---------------------------------------------------------
@@ -287,18 +225,15 @@ function ReaderPageContent({
    * ---------------------------------------------------------
    */
 
-
   useKeyboardNavigation({
     controls,
   });
-
 
   /**
    * ---------------------------------------------------------
    * Reader toolbar
    * ---------------------------------------------------------
    */
-
 
   const {
     isVisible: isToolbarVisible,
@@ -313,24 +248,18 @@ function ReaderPageContent({
     onNextChapter: goNextChapter,
   });
 
-
   /**
    * ---------------------------------------------------------
    * Loading state
    * ---------------------------------------------------------
    */
-  useEffect(()=>{
-    console.log("CURRENT PAGE", currentPage +1)
-  },[currentPage])
+  useEffect(() => {
+    console.log("CURRENT PAGE", currentPage + 1);
+  }, [currentPage]);
 
   if (pagesQuery.isPending) {
-    return (
-      <div className="reader-loading">
-        Loading pages...
-      </div>
-    );
+    return <div className="reader-loading">Loading pages...</div>;
   }
-
 
   /**
    * ---------------------------------------------------------
@@ -338,15 +267,11 @@ function ReaderPageContent({
    * ---------------------------------------------------------
    */
 
-
   if (pagesQuery.isError) {
     return (
-      <div className="reader-error">
-        Error: {pagesQuery.error.message}
-      </div>
+      <div className="reader-error">Error: {pagesQuery.error.message}</div>
     );
   }
-
 
   /**
    * ---------------------------------------------------------
@@ -354,19 +279,14 @@ function ReaderPageContent({
    * ---------------------------------------------------------
    */
 
-
   const readerClassName =
-    settings.theme === "dark"
-      ? "reader reader-dark"
-      : "reader reader-light";
-
+    settings.theme === "dark" ? "reader reader-dark" : "reader reader-light";
 
   /**
    * ---------------------------------------------------------
    * Render
    * ---------------------------------------------------------
    */
-
 
   return (
     <div className={readerClassName}>
@@ -376,15 +296,12 @@ function ReaderPageContent({
        * =====================================================
        */}
 
-
       <ReaderToolbar
         currentPage={currentPage}
         totalPages={totalPages}
         hasPreviousChapter={hasPrevious}
         hasNextChapter={hasNext}
-        isNavigationLoading={
-          navigationStatus === "loading"
-        }
+        isNavigationLoading={navigationStatus === "loading"}
         isVisible={isToolbarVisible}
         isSettingsOpen={isSettingsOpen}
         onPreviousPage={previousPage}
@@ -393,10 +310,7 @@ function ReaderPageContent({
         onNextChapter={goNextChapter}
         onProgressClick={() => {
           const progressButton =
-            document.querySelector<HTMLButtonElement>(
-              ".reader-progress"
-            );
-
+            document.querySelector<HTMLButtonElement>(".reader-progress");
 
           progressButton?.click();
         }}
@@ -410,13 +324,11 @@ function ReaderPageContent({
         onToggleVisibility={toggleVisibility}
       />
 
-
       {/**
        * =====================================================
        * Chapter Navigation
        * =====================================================
        */}
-
 
       <ReaderNavigation
         hasPrevious={hasPrevious}
@@ -426,13 +338,11 @@ function ReaderPageContent({
         navigationStatus={navigationStatus}
       />
 
-
       {/**
        * =====================================================
        * Reader content
        * =====================================================
        */}
-
 
       <main className="reader-content">
         {isLongStrip ? (
@@ -441,10 +351,10 @@ function ReaderPageContent({
             currentPage={currentPage}
             renderAhead={RENDER_AHEAD}
             observePage={observePage}
-            targetPage={targetPage}
-            onScrollContainerReady={
-              setLongStripScrollContainer
-            }
+            // targetPage={targetPage}
+            onScrollContainerReady={setLongStripScrollContainer}
+            parentRef={longStripParentRef}
+            virtualizer={virtualizer}
           />
         ) : (
           <SinglePageReader
@@ -456,13 +366,11 @@ function ReaderPageContent({
         )}
       </main>
 
-
       {/**
        * =====================================================
        * Reader Progress
        * =====================================================
        */}
-
 
       <ReaderProgress
         currentPage={currentPage}
@@ -470,19 +378,14 @@ function ReaderPageContent({
         onGoToPage={goToReaderPage}
       />
 
-
       {/**
        * =====================================================
        * Settings overlay
        * =====================================================
        */}
 
-
       {isSettingsOpen && (
-        <div
-          className="reader-settings-overlay"
-          onClick={closeSettings}
-        >
+        <div className="reader-settings-overlay" onClick={closeSettings}>
           <div
             className="reader-settings-container"
             onClick={(event) => {
@@ -498,7 +401,6 @@ function ReaderPageContent({
               ×
             </button>
 
-
             <ReaderSettingsPanel />
           </div>
         </div>
@@ -507,8 +409,4 @@ function ReaderPageContent({
   );
 }
 
-
 export default ReaderPage;
-
-
-

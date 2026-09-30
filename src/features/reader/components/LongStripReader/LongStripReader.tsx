@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useLongStripVirtualizer } from "../../hooks/useLongStripVirtualizer";
 import ReaderImage from "../ReaderImage/ReaderImage";
 import "./LongStripReader.scss";
+import type { ReactVirtualizer, Virtualizer } from "@tanstack/react-virtual";
 
 
 type ReaderPageData = {
@@ -14,9 +15,11 @@ type LongStripReaderProps = {
   pages: ReaderPageData[];
   currentPage: number;
   renderAhead: number;
-  targetPage: number | null;
+  // targetPage: number | null;
   observePage: (element: HTMLElement | null) => void;
   onScrollContainerReady:(element:HTMLElement|null)=>void;
+  parentRef:React.RefObject<HTMLElement|null>;
+  virtualizer: ReactVirtualizer<HTMLElement, Element>
 };
 
 
@@ -24,19 +27,21 @@ function LongStripReader({
   pages,
   currentPage,
   renderAhead,
-  targetPage,
+  // targetPage,
   observePage,
   onScrollContainerReady,
+  parentRef,
+  virtualizer
 }: LongStripReaderProps) {
-  const { parentRef, virtualizer } = useLongStripVirtualizer({
-    count: pages.length,
-  });
+  // const { parentRef, virtualizer } = useLongStripVirtualizer({
+  //   count: pages.length,
+  // });
 
   const virtualItems = virtualizer.getVirtualItems();
 
-  useEffect(()=>{
-    onScrollContainerReady(parentRef.current)
-  },[parentRef])
+  // useEffect(()=>{
+  //   onScrollContainerReady(parentRef.current)
+  // },[parentRef])
 
   return (
     <section
@@ -71,13 +76,13 @@ function LongStripReader({
             distanceFromCurrentPage <= renderAhead;
 
 
-          const isTargetPage =
-            targetPage !== null &&
-            page.index === targetPage;
+          // const isTargetPage =
+          //   targetPage !== null &&
+          //   page.index === targetPage;
 
 
           const shouldLoad =
-            isNearCurrentPage || isTargetPage;
+            isNearCurrentPage;
 
 
           return (

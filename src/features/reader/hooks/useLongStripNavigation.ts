@@ -1,54 +1,64 @@
+import type { ReactVirtualizer, Virtualizer } from "@tanstack/react-virtual";
 import { useCallback, useEffect, useState } from "react";
 
 type UseLongStripNavigationProps ={
     currentPage:number;
     totalPages:number;
+    virtualizer:ReactVirtualizer<HTMLElement, Element>
 }
 
 export function useLongStripNavigation ({
     currentPage,
     totalPages,
+    virtualizer,
 }:UseLongStripNavigationProps){
-    const [ targetPage, setTargetPage]= useState<number|null>(null)
+    // const [ targetPage, setTargetPage]= useState<number|null>(null)
     
-    const clamPage = useCallback((page:number)=>{
-        if(totalPages<=0){
-            return
-        }
+    // const clamPage = useCallback((page:number)=>{
+    //     if(totalPages<=0){
+    //         return
+    //     }
 
-        return Math.min(Math.max(page,0),totalPages-1)
-    },[totalPages])
+    //     return Math.min(Math.max(page,0),totalPages-1)
+    // },[totalPages])
 
     const requestScrollToPage =useCallback((page:number)=>{
         if(totalPages<=0){
             return
         }
 
-        const safePage = clamPage(page)
+        const safePage = Math.min(
+            Math.max(page,0),
+            totalPages-1
+        )
         if(safePage === undefined){
             return
         }
-        setTargetPage(safePage)
-    },[clamPage,totalPages])
-
-    useEffect(()=>{
-        if(targetPage === null ){
-            return
-        }
-
-        const element = document.querySelector<HTMLElement>(`[data-page="${targetPage+1}"]`)
-
-        if(!element){
-            return
-        }
-
-        element.scrollIntoView({
-            behavior:"auto",
-            block:"start"
+        // setTargetPage(safePage)
+        virtualizer.scrollToIndex(safePage,{
+            align:"start",
+            behavior:"auto"
         })
+    },[totalPages])
 
-        setTargetPage(null)
-    },[targetPage])
+    // useEffect(()=>{
+    //     if(targetPage === null ){
+    //         return
+    //     }
+
+    //     const element = document.querySelector<HTMLElement>(`[data-page="${targetPage+1}"]`)
+
+    //     if(!element){
+    //         return
+    //     }
+
+    //     element.scrollIntoView({
+    //         behavior:"auto",
+    //         block:"start"
+    //     })
+
+    //     setTargetPage(null)
+    // },[targetPage])
 
     const scrollToNextPage = useCallback(()=>{
         if(totalPages<=0){
@@ -71,7 +81,7 @@ export function useLongStripNavigation ({
     },[currentPage,requestScrollToPage])
 
     return{
-        targetPage,
+        targetPage:null,
         requestScrollToPage,
         scrollToNextPage,
         scrollToPreviousPage,
