@@ -18,18 +18,12 @@ function ReaderImage({
   alt,
   shouldLoad,
 }: ReaderImageProps) {
-  /**
-   * 图片是否已经成功加载。
-   */
+
   const [
     loaded,
     setLoaded,
   ] = useState(false);
 
-
-  /**
-   * 图片是否加载失败。
-   */
   const [
     error,
     setError,
@@ -60,24 +54,6 @@ function ReaderImage({
     };
 
 
-  /**
-   * ---------------------------------------------------------
-   * 当前 page 不需要加载。
-   * ---------------------------------------------------------
-   *
-   * 这里只显示 placeholder。
-   *
-   * 但是仍然保留固定的 page ratio，
-   * 避免 Virtualizer 看到：
-   *
-   * 0px
-   * ↓
-   * 240px
-   * ↓
-   * 800px
-   *
-   * 这种高度变化。
-   */
   if (!shouldLoad) {
     return (
       <div
@@ -153,13 +129,6 @@ function ReaderImage({
         </div>
       )}
 
-
-      /**
-       * 这里加入 wrapper。
-       *
-       * CSS 可以保证 page 在 image load
-       * 之前就有稳定高度。
-       */
       <div className="reader-image-wrapper">
         <img
           src={src}

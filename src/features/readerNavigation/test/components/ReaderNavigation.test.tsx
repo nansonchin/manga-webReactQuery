@@ -15,13 +15,13 @@ describe("ReaderNavigation",()=>{
 
         expect(
             screen.getByRole("button",{
-                name:"Previous Button"
+                name:"Previous chapter"
             })
         ).toBeInTheDocument()
 
-        expect(screen.getByText("Current Chapter")).toBeInTheDocument()
+        expect(screen.getByText("CURRENT CHAPTER")).toBeInTheDocument()
         expect(screen.getByRole("button",{
-            name:"Next Chapter",
+            name:"Next chapter",
         })).toBeInTheDocument()
         
     })
@@ -35,7 +35,7 @@ describe("ReaderNavigation",()=>{
         render(<ReaderNavigation hasPrevious={true} hasNext={true} onPrevious={onPrevious} onNext={onNext} navigationStatus="idle"/>)
         
         const previousButton = screen.getByRole("button",{
-            name:"Previous Button",
+            name:"Previous chapter",
         })
 
         await user.click(previousButton)
@@ -53,7 +53,7 @@ describe("ReaderNavigation",()=>{
         render(<ReaderNavigation hasPrevious={true} hasNext={true} onPrevious={onPrevious} onNext={onNext} navigationStatus="idle"/>)
 
         const nextButton = screen.getByRole("button",{
-            name:"Next Chapter"
+            name:"Next chapter"
         })
 
         await user.click(nextButton)
@@ -74,7 +74,7 @@ describe("ReaderNavigation",()=>{
         />)
 
         const previousButton = screen.getByRole("button",{
-            name:"Previous Button"
+            name:"Previous chapter"
         })
 
         expect(previousButton).toBeDisabled()
@@ -89,7 +89,7 @@ describe("ReaderNavigation",()=>{
         )
 
         const previousButton = screen.getByRole("button",{
-            name:"Loading"
+            name:"Previous chapter"
         })
 
         expect(previousButton).toBeDisabled()
@@ -103,7 +103,7 @@ describe("ReaderNavigation",()=>{
             <ReaderNavigation hasPrevious={true} hasNext={true} onPrevious={onPrevious} onNext={onNext} navigationStatus="error"/>
         )
 
-        expect(screen.getByRole("alert")).toHaveTextContent("Failed to load previous chapter")
+        expect(screen.getByText("Navigation failed")).toBeInTheDocument()
     })
 
     

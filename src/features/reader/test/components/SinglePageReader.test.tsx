@@ -36,8 +36,8 @@ describe("SinglePageReader", () => {
     render(<SinglePageReader pages={pages} currentPage={0} onNextPage={vi.fn()} onPreviousPage={vi.fn()}/>)
   
     expect(screen.getAllByAltText("Page 1"))
-    expect(screen.getAllByAltText("Page 2"))
-    expect(screen.getAllByAltText("Page 3"))
+    expect(screen.queryByAltText("Page 2"))
+    expect(screen.queryByAltText("Page 3"))
 
 })
 

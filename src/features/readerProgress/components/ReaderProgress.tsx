@@ -74,7 +74,7 @@ export function ReaderProgress({
         aria-label={`Current  page ${displayPage} of ${totalPages}. Go to Page`}
       >
         <span className="reader-progress-current">{displayPage}</span>
-        <span className="reader-progress-divider" aria-hidde="true">
+        <span className="reader-progress-divider" aria-hidden="true">
           /
         </span>
         <span className="reader-progress-total">{totalPages}</span>

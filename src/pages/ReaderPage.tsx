@@ -32,7 +32,7 @@ import "./scss/ReaderPage.scss";
 import { useEffect, useState } from "react";
 import { useLongStripVirtualizer } from "../features/reader/hooks/useLongStripVirtualizer";
 
-const RENDER_AHEAD = 1;
+// const RENDER_AHEAD = 1;
 const PREFETCH_AHEAD = 3;
 
 function ReaderPage() {
@@ -60,15 +60,6 @@ function ReaderPageContent({
   const { settings } =
     useReaderSettings();
 
-
-  /**
-   * ---------------------------------------------------------
-   * Long Strip scroll container
-   * ---------------------------------------------------------
-   *
-   * 这个 state 只是让 tracking hook
-   * 知道真正的 DOM scroll container。
-   */
   const [
     longStripScrollContainer,
     setLongStripScrollContainer,
@@ -76,12 +67,6 @@ function ReaderPageContent({
     null
   );
 
-
-  /**
-   * ---------------------------------------------------------
-   * Reader data
-   * ---------------------------------------------------------
-   */
   const {
     pages,
     chapters,
@@ -92,29 +77,14 @@ function ReaderPageContent({
     chapterId,
   });
 
-
-  /**
-   * 总页数。
-   */
   const totalPages =
     pages.length;
 
-
-  /**
-   * ---------------------------------------------------------
-   * Reader mode
-   * ---------------------------------------------------------
-   */
   const isLongStrip =
     settings.pageMode ===
     "long-strip";
 
 
-  /**
-   * ---------------------------------------------------------
-   * Chapter navigation
-   * ---------------------------------------------------------
-   */
   const {
     hasNext,
     hasPrevious,
@@ -138,12 +108,6 @@ function ReaderPageContent({
         chaptersQuery.isFetchNextPageError,
     });
 
-
-  /**
-   * ---------------------------------------------------------
-   * Current page
-   * ---------------------------------------------------------
-   */
   const {
     currentPage,
     setCurrentPageFromTracking,
@@ -156,12 +120,6 @@ function ReaderPageContent({
       totalPages,
     });
 
-
-  /**
-   * ---------------------------------------------------------
-   * Virtualizer
-   * ---------------------------------------------------------
-   */
   const {
     parentRef:
       longStripParentRef,
@@ -172,11 +130,6 @@ function ReaderPageContent({
     });
 
 
-  /**
-   * ---------------------------------------------------------
-   * Progress persistence
-   * ---------------------------------------------------------
-   */
   const {
     restoredPage,
     hasRestored,
@@ -189,21 +142,7 @@ function ReaderPageContent({
     });
 
 
-  /**
-   * ---------------------------------------------------------
-   * Long Strip tracking
-   * ---------------------------------------------------------
-   *
-   * tracking 现在不再使用 IntersectionObserver。
-   *
-   * 它直接使用 Virtualizer 的：
-   *
-   * start
-   * end
-   * size
-   *
-   * 来计算当前 page。
-   */
+
   const {
     setProgrammaticNavigation,
   } =
@@ -217,12 +156,6 @@ function ReaderPageContent({
         setCurrentPageFromTracking,
     });
 
-
-  /**
-   * ---------------------------------------------------------
-   * Long Strip navigation
-   * ---------------------------------------------------------
-   */
   const {
     targetPage,
     scrollToNextPage,
@@ -238,28 +171,12 @@ function ReaderPageContent({
       setProgrammaticNavigation,
     });
 
-
-  /**
-   * ---------------------------------------------------------
-   * Image preload
-   * ---------------------------------------------------------
-   */
-  const PREFETCH_AHEAD =
-    3;
-
-
   useReaderPreload(
     pages,
     currentPage,
     PREFETCH_AHEAD
   );
 
-
-  /**
-   * ---------------------------------------------------------
-   * Unified navigation
-   * ---------------------------------------------------------
-   */
   const nextPage =
     isLongStrip
       ? scrollToNextPage
@@ -278,11 +195,6 @@ function ReaderPageContent({
       : goToPage;
 
 
-  /**
-   * ---------------------------------------------------------
-   * Restore reader position
-   * ---------------------------------------------------------
-   */
   useReaderRestorePosition({
     restoredPage,
     hasRestored,
@@ -291,12 +203,6 @@ function ReaderPageContent({
     requestScrollToPage,
   });
 
-
-  /**
-   * ---------------------------------------------------------
-   * Reader controls
-   * ---------------------------------------------------------
-   */
   const controls =
     useReaderControls({
       currentPage,
@@ -321,22 +227,10 @@ function ReaderPageContent({
         goToReaderPage,
     });
 
-
-  /**
-   * ---------------------------------------------------------
-   * Keyboard
-   * ---------------------------------------------------------
-   */
   useKeyboardNavigation({
     controls,
   });
 
-
-  /**
-   * ---------------------------------------------------------
-   * Toolbar
-   * ---------------------------------------------------------
-   */
   const {
     isVisible:
       isToolbarVisible,
@@ -370,14 +264,6 @@ function ReaderPageContent({
         goNextChapter,
     });
 
-
-  /**
-   * ---------------------------------------------------------
-   * Debug
-   * ---------------------------------------------------------
-   *
-   * 你现在可以继续保留这个。
-   */
   useEffect(() => {
     console.log(
       "CURRENT PAGE",
@@ -385,12 +271,6 @@ function ReaderPageContent({
     );
   }, [currentPage]);
 
-
-  /**
-   * ---------------------------------------------------------
-   * Loading
-   * ---------------------------------------------------------
-   */
   if (
     pagesQuery.isPending
   ) {
@@ -402,11 +282,6 @@ function ReaderPageContent({
   }
 
 
-  /**
-   * ---------------------------------------------------------
-   * Error
-   * ---------------------------------------------------------
-   */
   if (
     pagesQuery.isError
   ) {
@@ -421,34 +296,17 @@ function ReaderPageContent({
     );
   }
 
-
-  /**
-   * ---------------------------------------------------------
-   * Theme
-   * ---------------------------------------------------------
-   */
   const readerClassName =
     settings.theme === "dark"
       ? "reader reader-dark"
       : "reader reader-light";
 
-
-  /**
-   * ---------------------------------------------------------
-   * Render
-   * ---------------------------------------------------------
-   */
   return (
     <div
       className={
         readerClassName
       }
     >
-      {/* =====================================================
-          TOOLBAR
-      ===================================================== */}
-
-
       <ReaderToolbar
         currentPage={
           currentPage
@@ -507,12 +365,6 @@ function ReaderPageContent({
         }
       />
 
-
-      {/* =====================================================
-          CHAPTER NAVIGATION
-      ===================================================== */}
-
-
       <ReaderNavigation
         hasPrevious={
           hasPrevious
@@ -528,11 +380,6 @@ function ReaderPageContent({
           navigationStatus
         }
       />
-
-
-      {/* =====================================================
-          READER CONTENT
-      ===================================================== */}
 
 
       <main className="reader-content">
@@ -567,12 +414,6 @@ function ReaderPageContent({
         )}
       </main>
 
-
-      {/* =====================================================
-          PROGRESS
-      ===================================================== */}
-
-
       <ReaderProgress
         currentPage={
           currentPage
@@ -584,12 +425,6 @@ function ReaderPageContent({
           goToReaderPage
         }
       />
-
-
-      {/* =====================================================
-          SETTINGS
-      ===================================================== */}
-
 
       {isSettingsOpen && (
         <div

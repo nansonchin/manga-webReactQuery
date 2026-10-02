@@ -57,16 +57,8 @@ function LongStripReader({
   return (
     <section
       ref={(element) => {
-        /**
-         * 给 TanStack Virtualizer。
-         */
         parentRef.current =
           element;
-
-
-        /**
-         * 给 tracking。
-         */
         onScrollContainerReady(
           element
         );

@@ -1,262 +1,495 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
-import { useLongStripPageTracking } from "../../features/reader/hooks/useLongStripPageTracking";
 import { act, renderHook } from "@testing-library/react";
-import { createElement } from "react";
 
-type ObserverCallback = IntersectionObserverCallback;
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
-let observerCallBack: ObserverCallback;
-let observedElements: Element[];
+import { useLongStripPageTracking } from "../../features/reader/hooks/useLongStripPageTracking";
+import type { ReactVirtualizer } from "@tanstack/react-virtual";
 
-const observeMock = vi.fn()
-const disconnectMock = vi.fn()
-
-class MockIntersectionObserver {
-  constructor(callback: ObserverCallback, _options?: IntersectionObserverInit) {
-    observerCallBack = callback;
-  }
-
-  observe(element: Element) {
-    observeMock(element)
-  }
-
-  unobserve(_element: Element) {}
-
-  disconnect() {
-    disconnectMock()
-  }
-}
-
-function createPageElement(
-    page:number,
-    rect:{
-        top:number,
-        height:number
-    },
-){
-    const element = document.createElement("div")
-
-    element.setAttribute("data-page",String(page))
-
-    element.getBoundingClientRect=()=>({
-        top:rect.top,
-        bottom:rect.top+rect.height,
-        left:0,
-        right:100,
-        width:100,
-        height:rect.height,
-        x:0,
-        y:rect.top,
-        toJSON:()=>{}
-    })
-
-    return element
-}
-
-function createIntersectionEntry(
-    element:HTMLElement,
-    isIntersecting:boolean,
-):IntersectionObserverEntry{
-
-    return{
-        target:element,
-        isIntersecting,
-        boundingClientRect:element.getBoundingClientRect(),
-        intersectionRatio:isIntersecting?1:0,
-        intersectionRect:element.getBoundingClientRect(),
-        rootBounds:null,
-        time:0
-    }
-}
+type VirtualItem = {
+  index: number;
+  start: number;
+  end: number;
+  size: number;
+};
 
 describe("useLongStripPageTracking", () => {
+  let root: HTMLElement;
+
+  let virtualItems: VirtualItem[];
+
+  let getVirtualItemsMock: ReturnType<typeof vi.fn>;
+
+  let requestAnimationFrameMock: ReturnType<typeof vi.fn>;
+
+  let cancelAnimationFrameMock: ReturnType<typeof vi.fn>;
+
   beforeEach(() => {
-    observeMock.mockClear()
-    disconnectMock.mockClear()
-    
-    vi.stubGlobal("IntersectionObserver",MockIntersectionObserver,)
+    vi.clearAllMocks();
 
-    Object.defineProperty(window,"innerHeight",{
-        configurable:true,
-        value:1000,
-    })
+    root = document.createElement("div");
+
+    Object.defineProperty(root, "scrollTop", {
+      configurable: true,
+      writable: true,
+      value: 0,
+    });
+
+    Object.defineProperty(root, "clientHeight", {
+      configurable: true,
+      value: 1000,
+    });
+
+    virtualItems = [];
+
+    getVirtualItemsMock = vi.fn(() => virtualItems);
+
+    /**
+     * -------------------------------------------------------
+     * Fake requestAnimationFrame
+     * -------------------------------------------------------
+     *
+     * 不让 RAF 真正异步，
+     * test 可以直接控制 callback。
+     */
+    requestAnimationFrameMock = vi.fn((callback: FrameRequestCallback) => {
+      callback(0);
+
+      return 1;
+    });
+
+    cancelAnimationFrameMock = vi.fn();
+
+    vi.stubGlobal("requestAnimationFrame", requestAnimationFrameMock);
+
+    vi.stubGlobal("cancelAnimationFrame", cancelAnimationFrameMock);
   });
 
-  it("calls onPageCHange with the correctpage index when a page becomes visible", () => {
+  function renderTracking(options?: { enabled?: boolean }) {
     const onPageChange = vi.fn();
 
-    const { result } = renderHook(() =>
-      useLongStripPageTracking({ enabled: true, onPageChange }),
+    const enabled = options?.enabled ?? true;
+
+    const virtualizer = {
+      getVirtualItems: getVirtualItemsMock,
+
+      getTotalSize: vi.fn(),
+      scrollToIndex: vi.fn(),
+      scrollToOffset: vi.fn(),
+      measureElement: vi.fn(),
+    };
+
+    const hook = renderHook(() =>
+      useLongStripPageTracking({
+        enabled,
+        root,
+        virtualizer: virtualizer as never,
+        onPageChange,
+      }),
     );
 
-    const pageElement = createPageElement(1,{top:0,height:100})
+    return {
+      ...hook,
+      onPageChange,
+      virtualizer,
+    };
+  }
 
-    act(()=>{
-        result.current.observePage(pageElement)
-    })
+  it("updates current page based on the viewport center", () => {
+    virtualItems = [
+      {
+        index: 0,
+        start: 0,
+        end: 400,
+        size: 400,
+      },
 
-    expect(observeMock).toHaveBeenCalledWith(pageElement)
+      {
+        index: 1,
+        start: 400,
+        end: 800,
+        size: 400,
+      },
 
-    act(()=>{
-        observerCallBack([createIntersectionEntry(pageElement,true)],{} as IntersectionObserver)
-    })
+      {
+        index: 2,
+        start: 800,
+        end: 1200,
+        size: 400,
+      },
+    ];
 
-    expect(onPageChange).toHaveBeenCalledWith(0);
+    const { onPageChange } = renderTracking();
+
+    expect(onPageChange).toHaveBeenCalledWith(1);
   });
 
-  it("selects the visible page closet to the viewport center", () => {
+  it("updates current page when scroll position changes", () => {
+    virtualItems = [
+      {
+        index: 0,
+        start: 0,
+        end: 500,
+        size: 500,
+      },
+
+      {
+        index: 1,
+        start: 500,
+        end: 1000,
+        size: 500,
+      },
+
+      {
+        index: 2,
+        start: 1000,
+        end: 1500,
+        size: 500,
+      },
+    ];
+
+    const { onPageChange } = renderTracking();
+
+    expect(onPageChange).toHaveBeenCalledWith(1);
+
+    onPageChange.mockClear();
+
+    root.scrollTop = 700;
+
+    act(() => {
+      root.dispatchEvent(new Event("scroll"));
+    });
+
+    expect(onPageChange).toHaveBeenCalledWith(2);
+  });
+
+  it("selects the page containing the viewport center", () => {
+    virtualItems = [
+      {
+        index: 0,
+        start: 0,
+        end: 300,
+        size: 300,
+      },
+
+      {
+        index: 1,
+        start: 300,
+        end: 900,
+        size: 600,
+      },
+
+      {
+        index: 2,
+        start: 900,
+        end: 1400,
+        size: 500,
+      },
+    ];
+
+    const { onPageChange } = renderTracking();
+
+    expect(onPageChange).toHaveBeenCalledWith(1);
+  });
+
+  /**
+   * ---------------------------------------------------------
+   * Closest page
+   * ---------------------------------------------------------
+   */
+  it("selects the closest page when viewport center is between pages", () => {
+    virtualItems = [
+      {
+        index: 0,
+        start: 0,
+        end: 300,
+        size: 300,
+      },
+
+      {
+        index: 1,
+        start: 500,
+        end: 700,
+        size: 200,
+      },
+
+      {
+        index: 2,
+        start: 900,
+        end: 1200,
+        size: 300,
+      },
+    ];
+
+    const { onPageChange } = renderTracking();
+
+    expect(onPageChange).toHaveBeenCalledWith(1);
+  });
+
+  it("resumes tracking after programmatic navigation ends", () => {
     const onPageChange = vi.fn();
+
+    const root = document.createElement("div");
+
+    Object.defineProperty(root, "clientHeight", {
+      configurable: true,
+      value: 1000,
+    });
+
+    Object.defineProperty(root, "scrollTop", {
+      configurable: true,
+      writable: true,
+      value: 0,
+    });
+
+    const virtualizer = {
+      getVirtualItems: vi.fn(() => [
+        {
+          index: 0,
+          start: 0,
+          end: 500,
+          size: 500,
+        },
+        {
+          index: 1,
+          start: 500,
+          end: 1000,
+          size: 500,
+        },
+        {
+          index: 2,
+          start: 1000,
+          end: 1500,
+          size: 500,
+        },
+      ]),
+    } as unknown as ReactVirtualizer<HTMLElement, Element>;
+
     const { result } = renderHook(() =>
-      useLongStripPageTracking({ enabled: true, onPageChange }),
+      useLongStripPageTracking({
+        enabled: true,
+        root,
+        virtualizer,
+        onPageChange,
+      }),
     );
 
-    const page1 = createPageElement(1,{top:100,height:200})
-    const page2 = createPageElement(2,{top:450,height:100})
+    act(() => {
+      root.dispatchEvent(new Event("scroll"));
+    });
 
-    act(()=>{
-        result.current.observePage(page1)
-        result.current.observePage(page2)
-    })
+    expect(onPageChange).toHaveBeenCalled();
 
-    act(()=>{
-        observerCallBack([
-            createIntersectionEntry
-            (page1,true),
-            createIntersectionEntry(page2,true)
-        ],{} as IntersectionObserver)
-    })
-    expect(onPageChange).toHaveBeenCalledWith(1)
+    onPageChange.mockClear();
+
+    act(() => {
+      result.current.setProgrammaticNavigation(true);
+    });
+
+    root.scrollTop = 1000;
+
+    act(() => {
+      root.dispatchEvent(new Event("scroll"));
+    });
+
+    expect(onPageChange).not.toHaveBeenCalled();
+
+    act(() => {
+      result.current.setProgrammaticNavigation(false);
+    });
+
+    expect(onPageChange).toHaveBeenCalledWith(2);
   });
 
-  it("does not observe pages when enabed is false",()=>{
+  it("does not track when disabled", () => {
+    virtualItems = [
+      {
+        index: 0,
+        start: 0,
+        end: 1000,
+        size: 1000,
+      },
+    ];
+
+    const { onPageChange } = renderTracking({
+      enabled: false,
+    });
+
+    expect(onPageChange).not.toHaveBeenCalled();
+
+    act(() => {
+      root.dispatchEvent(new Event("scroll"));
+    });
+
+    expect(onPageChange).not.toHaveBeenCalled();
+  });
+
+  it("does not update when there are no virtual items", () => {
+    virtualItems = [];
+
+    const { onPageChange } = renderTracking();
+
+    expect(onPageChange).not.toHaveBeenCalled();
+  });
+
+  it("does not update when root is null", () => {
+    virtualItems = [
+      {
+        index: 0,
+        start: 0,
+        end: 1000,
+        size: 1000,
+      },
+    ];
+
     const onPageChange = vi.fn();
 
-    const {result} = renderHook(()=>useLongStripPageTracking({
-        enabled:false,
+    const virtualizer = {
+      getVirtualItems: getVirtualItemsMock,
+
+      getTotalSize: vi.fn(),
+      scrollToIndex: vi.fn(),
+      scrollToOffset: vi.fn(),
+      measureElement: vi.fn(),
+    };
+
+    renderHook(() =>
+      useLongStripPageTracking({
+        enabled: true,
+        root: null,
+        virtualizer: virtualizer as never,
         onPageChange,
-    }))
+      }),
+    );
 
-    const pageElement = createPageElement(1,{
-        top:0,
-        height:100,
-    })
-    act(()=>{
+    expect(onPageChange).not.toHaveBeenCalled();
+  });
 
-        result.current.observePage(pageElement)
-    })
+  it("does not update current page during programmatic navigation", () => {
+    virtualItems = [
+      {
+        index: 0,
+        start: 0,
+        end: 500,
+        size: 500,
+      },
 
-    expect(observeMock).not.toHaveBeenCalled()
-    expect(onPageChange).not.toHaveBeenCalled()
-  })
+      {
+        index: 1,
+        start: 500,
+        end: 1000,
+        size: 500,
+      },
 
-  it("removes a page from visible pages when it stops intersecting",()=>{
-    const onPageChange =vi.fn()
+      {
+        index: 2,
+        start: 1000,
+        end: 1500,
+        size: 500,
+      },
+    ];
 
-    const {result} = renderHook(()=>useLongStripPageTracking({
-        enabled:true,
-        onPageChange,
-    }))
+    const { result, onPageChange } = renderTracking();
 
-    const page1= createPageElement(1,{
-        top:450,
-        height:100,
-    })
+    expect(onPageChange).toHaveBeenCalledWith(1);
 
-    const page2 =createPageElement(2,{
-        top:100,
-        height:100
-    })
+    onPageChange.mockClear();
 
-    act(()=>{
-        result.current.observePage(page1)
+    /**
+     * 开始 programmatic navigation。
+     */
+    act(() => {
+      result.current.setProgrammaticNavigation(true);
+    });
 
-        result.current.observePage(page2)
-    })
+    root.scrollTop = 700;
 
-    act(()=>{
-        observerCallBack([createIntersectionEntry(page1,true),createIntersectionEntry(page2,true)],
-        {}as IntersectionObserver
-    )
-    })
+    act(() => {
+      root.dispatchEvent(new Event("scroll"));
+    });
 
-    expect(onPageChange).toHaveBeenLastCalledWith(0)
+    /**
+     * tracking 应该被 lock。
+     */
+    expect(onPageChange).not.toHaveBeenCalled();
+  });
 
-    act(()=>{
-        observerCallBack([createIntersectionEntry(page1,false)],{} as IntersectionObserver)
-    })
+  /**
+   * ---------------------------------------------------------
+   * Resume tracking
+   * ---------------------------------------------------------
+   */
+  it("resumes tracking after programmatic navigation ends", () => {
+    virtualItems = [
+      {
+        index: 0,
+        start: 0,
+        end: 500,
+        size: 500,
+      },
 
-    expect(onPageChange).toHaveBeenLastCalledWith(1)
-  })
+      {
+        index: 1,
+        start: 500,
+        end: 1000,
+        size: 500,
+      },
 
-  it("does not call onPageChnge when no page is visible",()=>{
-    const onPageChange = vi.fn()
+      {
+        index: 2,
+        start: 1000,
+        end: 1500,
+        size: 500,
+      },
+    ];
 
-    const {result} = renderHook(()=> useLongStripPageTracking({enabled:true,onPageChange}))
-  
-    const pageElement = createPageElement(1,{
-        top:450,
-        height:100
-    })
+    const { result, onPageChange } = renderTracking();
 
-    act(()=>{
-        result.current.observePage(pageElement)
-    })
+    onPageChange.mockClear();
 
-    act(()=>{
-        observerCallBack([createIntersectionEntry(pageElement,false)],{} as IntersectionObserver)
-    })
+    act(() => {
+      result.current.setProgrammaticNavigation(true);
+    });
 
-    expect(onPageChange).not.toHaveBeenCalled()
-})
+    root.scrollTop = 700;
 
-it("disconnects the observer when the hook unmounts",()=>{
-    const onPageChange = vi.fn();
+    act(() => {
+      root.dispatchEvent(new Event("scroll"));
+    });
 
-    const {unmount} = renderHook(()=>useLongStripPageTracking({
-        enabled:true,
-        onPageChange,
-    }))
+    expect(onPageChange).not.toHaveBeenCalled();
+
+    act(() => {
+      result.current.setProgrammaticNavigation(false);
+    });
+
+    act(() => {
+      root.dispatchEvent(new Event("scroll"));
+    });
+
+    expect(onPageChange).toHaveBeenCalledWith(2);
+  });
+
+  /**
+   * ---------------------------------------------------------
+   * Cleanup
+   * ---------------------------------------------------------
+   */
+  it("removes the scroll listener when unmounted", () => {
+    virtualItems = [
+      {
+        index: 0,
+        start: 0,
+        end: 1000,
+        size: 1000,
+      },
+    ];
+
+    const { unmount } = renderTracking();
+
+    const removeSpy = vi.spyOn(root, "removeEventListener");
 
     unmount();
-    expect(disconnectMock).toHaveBeenCalledTimes(1)
-})
 
-it("ignores null elements passed to observePage",()=>{
-    const onPageChange=vi.fn()
-
-    const {result}=renderHook(()=>useLongStripPageTracking({enabled:true,onPageChange}))
-
-    expect(()=>{
-        act(()=>{
-            result.current.observePage(null)
-        })
-    }).not.toThrow()
-
-    expect(observeMock).not.toHaveBeenCalled()
-})
-
-it("observes pages that were registered before the observer was created",()=>{
-    const onPageChange = vi.fn();
-
-    const pageElement = createPageElement(1,{
-        top:450,
-        height:100
-    })
-
-    const {result,rerender} = renderHook(({enabled})=>useLongStripPageTracking({enabled,onPageChange}),{
-        initialProps:{
-            enabled:false
-        }
-    })
-
-    act(()=>{
-        result.current.observePage(pageElement)
-    })
-
-    expect(observeMock).not.toHaveBeenCalled()
-
-    rerender({enabled:true})
-
-    expect(observeMock).toHaveBeenCalledWith(pageElement)
-})
+    expect(removeSpy).toHaveBeenCalledWith("scroll", expect.any(Function));
+  });
 });

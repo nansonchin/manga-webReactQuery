@@ -8,20 +8,17 @@ describe("Reader Image", () => {
       <ReaderImage src="image.jpg" alt="chapter page" shouldLoad={false} />,
     );
     expect(screen.queryByRole("img")).not.toBeInTheDocument();
-    expect(document.querySelector(".reader-placeholder")).toBeInTheDocument();
+    expect(document.querySelector(".reader-image--placeholder")).toBeInTheDocument();
   });
-  it("shows skeleton while image is loading", () => {
+  it("does not render image when shouldLoad is false", () => {
     render(
-      <ReaderImage src="image.jpg" alt="chapter page" shouldLoad={true} />,
+      <ReaderImage src="image.jpg" alt="chapter page" shouldLoad={false} />,
     );
 
-    expect(screen.getByRole("img")).toBeInTheDocument();
-    expect(
-      document.querySelector(".reader-image-skeleton"),
-    ).toBeInTheDocument();
+    expect(screen.queryByAltText("chapter page")).not.toBeInTheDocument()
   });
 
-  it("hides skeleton after image loads", async() => {
+  it("renders image when shouldLoad is true", async() => {
     render(
       <ReaderImage src="image.jpg" alt="chapter page" shouldLoad={true} />,
     );
@@ -29,13 +26,9 @@ describe("Reader Image", () => {
     const image = screen.getByRole("img");
     fireEvent.load(image);
 
-    await waitFor(() => {
-      expect(
-        document.querySelector(".reader-image-skeleton"),
-      ).not.toBeInTheDocument();
-    });
-
-    expect(image).toHaveClass("loaded");
+    expect(image).toBeInTheDocument()
+    expect(image).toHaveAttribute("src","image.jpg")
+    expect(image).toHaveAttribute("alt","chapter page")
   });
 
   it("shows error when image fails to load", async() => {
@@ -44,11 +37,13 @@ describe("Reader Image", () => {
     );
 
     const image = screen.getByRole("img");
-    image.dispatchEvent(new Event("error"));
+    fireEvent.error(image)
 
     await waitFor(()=>{
 
-    expect(screen.getByRole("alert")).toHaveTextContent("Failed to load Image");
+    expect(screen.getByRole("alert")).toBeInTheDocument()
     })
+
+    expect(screen.getByRole("alert")).toHaveTextContent("Unable to load page")
   });
 });

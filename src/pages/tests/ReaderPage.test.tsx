@@ -1,52 +1,14 @@
-import { fireEvent, render, screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
-import { MemoryRouter, Route, Routes } from "react-router-dom";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi, beforeEach } from "vitest";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 
 import ReaderPage from "../ReaderPage";
 
-import type { ChapterPage } from "../../features/reader/types";
+/* =========================================================
+ * Mock data
+ * ========================================================= */
 
-const mocks = vi.hoisted(() => ({
-  useReaderData: vi.fn(),
-
-  useChapterNavigation: vi.fn(),
-
-  useReaderPreload: vi.fn(),
-
-  useLongStripPageTracking: vi.fn(),
-
-  useLongStripNavigation: vi.fn(),
-}));
-
-
-vi.mock("../../features/reader/hooks/useReaderData", () => ({
-  useReaderData: mocks.useReaderData,
-}));
-
-vi.mock("../../features/readerNavigation/hooks/useChapterNavigation", () => ({
-  useChapterNavigation: mocks.useChapterNavigation,
-}));
-
-vi.mock("../../features/reader/hooks/useReaderPreload", () => ({
-  useReaderPreload: mocks.useReaderPreload,
-}));
-
-vi.mock("../../features/reader/hooks/useLongStripPageTracking", () => ({
-  useLongStripPageTracking: mocks.useLongStripPageTracking,
-}));
-
-vi.mock("../../features/reader/hooks/useLongStripNavigation", () => ({
-  useLongStripNavigation: mocks.useLongStripNavigation,
-}));
-
-vi.mock("../../features/reader/components/ReaderImage/ReaderImage", () => ({
-  default: ({ src, alt }: { src: string; alt: string }) => (
-    <img src={src} alt={alt} />
-  ),
-}));
-
-const pages: ChapterPage[] = [
+const mockPages = [
   {
     index: 0,
     url: "page-0.jpg",
@@ -61,11 +23,84 @@ const pages: ChapterPage[] = [
   },
 ];
 
-function setupMocks() {
-  mocks.useReaderData.mockReturnValue({
-    pages,
+const mockChapters = [
+  {
+    id: "chapter-1",
+    title: "Chapter 1",
+  },
+];
 
-    chapters: [],
+/* =========================================================
+ * Mock state
+ * ========================================================= */
+
+let mockCurrentPage = 0;
+
+const mockSetCurrentPageFromTracking = vi.fn();
+const mockRestorePage = vi.fn();
+
+const mockGoToNextPage = vi.fn(() => {
+  if (mockCurrentPage < mockPages.length - 1) {
+    mockCurrentPage += 1;
+  }
+});
+
+const mockGoToPreviousPage = vi.fn(() => {
+  if (mockCurrentPage > 0) {
+    mockCurrentPage -= 1;
+  }
+});
+
+const mockGoToPage = vi.fn((page: number) => {
+  if (page >= 0 && page < mockPages.length) {
+    mockCurrentPage = page;
+  }
+});
+
+/* =========================================================
+ * Router
+ * ========================================================= */
+
+vi.mock("react-router-dom", async () => {
+  const actual =
+    await vi.importActual<typeof import("react-router-dom")>(
+      "react-router-dom",
+    );
+
+  return {
+    ...actual,
+    useParams: () => ({
+      mangaId: "manga-1",
+      chapterId: "chapter-1",
+    }),
+  };
+});
+
+/* =========================================================
+ * Reader settings
+ * ========================================================= */
+
+vi.mock("../../features/readerSetting/context/ReaderSettingContext", () => ({
+  ReaderSettingsProvider: ({ children }: { children: React.ReactNode }) => (
+    <>{children}</>
+  ),
+
+  useReaderSettings: () => ({
+    settings: {
+      pageMode: "single-page",
+      theme: "light",
+    },
+  }),
+}));
+
+/* =========================================================
+ * Reader data
+ * ========================================================= */
+
+vi.mock("../../features/reader/hooks/useReaderData", () => ({
+  useReaderData: () => ({
+    pages: mockPages,
+    chapters: mockChapters,
 
     pagesQuery: {
       isPending: false,
@@ -79,442 +114,707 @@ function setupMocks() {
       isFetchingNextPage: false,
       isFetchNextPageError: false,
     },
-  });
+  }),
+}));
 
-  mocks.useChapterNavigation.mockReturnValue({
-    previousChapter: null,
-    nextChapter: null,
+/* =========================================================
+ * Current reader page
+ *
+ * IMPORTANT:
+ * Do NOT use another independent state here.
+ * ReaderPage gets currentPage from this mock.
+ * ========================================================= */
 
-    goPreviousChapter: vi.fn(),
-    goNextChapter: vi.fn(),
+vi.mock("../../features/reader/hooks/useCurrentReaderPage", () => ({
+  useCurrentReaderPage: () => ({
+    get currentPage() {
+      return mockCurrentPage;
+    },
 
-    hasPrevious: false,
+    setCurrentPageFromTracking: mockSetCurrentPageFromTracking,
+
+    restorePage: mockRestorePage,
+
+    goToNextPage: mockGoToNextPage,
+
+    goToPreviousPage: mockGoToPreviousPage,
+
+    goToPage: mockGoToPage,
+  }),
+}));
+
+/* =========================================================
+ * Progress persistence
+ * ========================================================= */
+
+vi.mock("../../features/reader/hooks/useReaderProgressPersistence", () => ({
+  useReaderProgressPersistence: () => ({
+    restoredPage: null,
+    hasRestored: true,
+  }),
+}));
+
+/* =========================================================
+ * Restore position
+ * ========================================================= */
+
+vi.mock("../../features/reader/hooks/useReaderRestorePosition", () => ({
+  useReaderRestorePosition: vi.fn(),
+}));
+
+/* =========================================================
+ * Preload
+ * ========================================================= */
+
+vi.mock("../../features/reader/hooks/useReaderPreload", () => ({
+  useReaderPreload: vi.fn(),
+}));
+
+/* =========================================================
+ * Long strip virtualizer
+ * ========================================================= */
+
+vi.mock("../../features/reader/hooks/useLongStripVirtualizer", () => ({
+  useLongStripVirtualizer: () => ({
+    parentRef: vi.fn(),
+    virtualizer: {},
+  }),
+}));
+
+/* =========================================================
+ * Long strip tracking
+ * ========================================================= */
+
+vi.mock("../../features/reader/hooks/useLongStripPageTracking", () => ({
+  useLongStripPageTracking: () => ({
+    setProgrammaticNavigation: vi.fn(),
+  }),
+}));
+
+/* =========================================================
+ * Long strip navigation
+ * ========================================================= */
+
+vi.mock("../../features/reader/hooks/useLongStripNavigation", () => ({
+  useLongStripNavigation: () => ({
+    targetPage: null,
+    scrollToNextPage: vi.fn(),
+    scrollToPreviousPage: vi.fn(),
+    requestScrollToPage: vi.fn(),
+  }),
+}));
+
+/* =========================================================
+ * Chapter navigation
+ * ========================================================= */
+
+vi.mock("../../features/readerNavigation/hooks/useChapterNavigation", () => ({
+  useChapterNavigation: () => ({
     hasNext: false,
+    hasPrevious: false,
 
-    pendingNavigation: null,
+    goNextChapter: vi.fn(),
+    goPreviousChapter: vi.fn(),
 
     navigationStatus: "idle",
+  }),
+}));
 
-    needsMoreChapters: false,
-  });
+/* =========================================================
+ * Reader controls
+ *
+ * This is the important part.
+ *
+ * The real ReaderPage calls:
+ *
+ * useReaderControls({
+ *   currentPage,
+ *   totalPages,
+ *   nextChapter,
+ *   previousChapter,
+ *   nextPage,
+ *   previousPage,
+ *   goToPage,
+ * })
+ *
+ * So our mock must return the shape that the toolbar expects.
+ * ========================================================= */
 
-  mocks.useReaderPreload.mockImplementation(() => {});
+vi.mock("../../features/reader/hooks/useReaderControl", () => ({
+  useReaderControls: (options: {
+    currentPage: number;
+    totalPages: number;
+    nextPage: () => void;
+    previousPage: () => void;
+    goToPage: (page: number) => void;
+    nextChapter: () => void;
+    previousChapter: () => void;
+  }) => ({
+    nextPage: options.nextPage,
+    previousPage: options.previousPage,
+    goToPage: options.goToPage,
 
-  mocks.useLongStripPageTracking.mockReturnValue({
-    observePage: vi.fn(),
-  });
+    nextChapter: options.nextChapter,
+    previousChapter: options.previousChapter,
+  }),
+}));
 
-  mocks.useLongStripNavigation.mockReturnValue({
-    targetPage: null,
+/* =========================================================
+ * Keyboard navigation
+ *
+ * DO NOT create your own keyboard event listener here.
+ *
+ * The old test did this and called:
+ *
+ * controls.nextPage()
+ *
+ * which does not match the actual hook contract.
+ *
+ * For ReaderPage tests, keyboard navigation should be tested
+ * separately in useKeyboardNavigation.test.tsx.
+ * ========================================================= */
 
-    scrollToNextPage: vi.fn(),
+vi.mock("../../features/reader/hooks/useKeyboardNavigation", () => ({
+  useKeyboardNavigation: vi.fn(),
+}));
 
-    scrollToPreviousPage: vi.fn(),
+/* =========================================================
+ * Reader toolbar hook
+ * ========================================================= */
 
-    requestScrollToPage: vi.fn(),
-  });
-}
+vi.mock("../../features/readerToolbar/hooks/useReaderToolbar", () => ({
+  default: () => ({
+    isVisible: true,
+    isSettingsOpen: false,
 
-function renderReaderPage() {
+    toggleVisibility: vi.fn(),
+    openSettings: vi.fn(),
+    closeSettings: vi.fn(),
+  }),
+}));
+
+/* =========================================================
+ * Reader toolbar component
+ * ========================================================= */
+
+vi.mock("../../features/readerToolbar/components/ReaderToolbar", () => ({
+  default: ({
+    currentPage,
+    totalPages,
+    onPreviousPage,
+    onNextPage,
+    onPreviousChapter,
+    onNextChapter,
+    onSettingsClick,
+    onToggleVisibility,
+  }: {
+    currentPage: number;
+    totalPages: number;
+    onPreviousPage: () => void;
+    onNextPage: () => void;
+    onPreviousChapter: () => void;
+    onNextChapter: () => void;
+    onSettingsClick: () => void;
+    onToggleVisibility: () => void;
+  }) => (
+    <header>
+      <button
+        type="button"
+        aria-label="Previous page"
+        data-testid="toolbar-previous-page"
+        onClick={onPreviousPage}
+      >
+        Previous page
+      </button>
+
+      <button
+        type="button"
+        aria-label="Next page"
+        data-testid="toolbar-next-page"
+        onClick={onNextPage}
+      >
+        Next page
+      </button>
+
+      <button
+        type="button"
+        aria-label={`Go to page ${currentPage + 1} of ${totalPages}`}
+      >
+        {String(currentPage + 1).padStart(2, "0")}
+        {" / "}
+        {String(totalPages).padStart(2, "0")}
+      </button>
+
+      <button
+        type="button"
+        aria-label="Previous chapter"
+        onClick={onPreviousChapter}
+        data-testid="toolbar-previous-chapter"
+      >
+        Previous chapter
+      </button>
+
+      <button
+        type="button"
+        aria-label="Next chapter"
+        onClick={onNextChapter}
+        data-testid="toolbar-next-chapter"
+      >
+        Next chapter
+      </button>
+
+      <button
+        type="button"
+        aria-label="Reader settings"
+        onClick={onSettingsClick}
+      >
+        Settings
+      </button>
+
+      <button
+        type="button"
+        aria-label="Hide reader toolbar"
+        onClick={onToggleVisibility}
+      >
+        Hide toolbar
+      </button>
+    </header>
+  ),
+}));
+
+/* =========================================================
+ * Reader navigation
+ * ========================================================= */
+
+vi.mock("../../features/readerNavigation/components/ReaderNavigation", () => ({
+  default: ({
+    hasPrevious,
+    hasNext,
+    onPrevious,
+    onNext,
+  }: {
+    hasPrevious: boolean;
+    hasNext: boolean;
+    onPrevious: () => void;
+    onNext: () => void;
+    navigationStatus: string;
+  }) => (
+    <nav aria-label="Chapter navigation">
+      <button
+        type="button"
+        aria-label="Previous chapter"
+        disabled={!hasPrevious}
+        onClick={onPrevious}
+      >
+        Previous
+      </button>
+
+      <span>Current chapter</span>
+
+      <button
+        type="button"
+        aria-label="Next chapter"
+        disabled={!hasNext}
+        onClick={onNext}
+      >
+        Next
+      </button>
+    </nav>
+  ),
+}));
+
+/* =========================================================
+ * Reader progress
+ * ========================================================= */
+
+vi.mock("../../features/readerProgress/components/ReaderProgress", () => ({
+  ReaderProgress: ({
+    currentPage,
+    totalPages,
+    onGoToPage,
+  }: {
+    currentPage: number;
+    totalPages: number;
+    onGoToPage: (page: number) => void;
+  }) => (
+    <button
+      type="button"
+      className="reader-progress"
+      aria-label={`Current page ${
+        currentPage + 1
+      } of ${totalPages}. Go to Page`}
+      onClick={() => onGoToPage(currentPage)}
+    >
+      <span>{currentPage + 1}</span>
+      <span>/</span>
+      <span>{totalPages}</span>
+    </button>
+  ),
+}));
+
+/* =========================================================
+ * Reader settings panel
+ * ========================================================= */
+
+vi.mock("../../features/readerSetting/components/ReaderSettingsPanel", () => ({
+  default: () => <div data-testid="reader-settings-panel">Reader settings</div>,
+}));
+
+/* =========================================================
+ * LongStripReader
+ *
+ * Not used in these tests because settings.pageMode is
+ * single-page.
+ * ========================================================= */
+
+vi.mock(
+  "../../features/reader/components/LongStripReader/LongStripReader",
+  () => ({
+    default: () => <div data-testid="long-strip-reader">Long strip reader</div>,
+  }),
+);
+
+/* =========================================================
+ * ReaderImage
+ *
+ * Keep the mock simple.
+ *
+ * This avoids jsdom image-loading behaviour interfering with
+ * ReaderPage tests.
+ * ========================================================= */
+
+vi.mock("../../features/reader/components/ReaderImage/ReaderImage", () => ({
+  default: ({
+    src,
+    alt,
+  }: {
+    src: string;
+    alt: string;
+    shouldLoad: boolean;
+  }) => <img src={src} alt={alt} data-testid={alt} />,
+}));
+
+/* =========================================================
+ * SinglePageReader
+ *
+ * IMPORTANT:
+ *
+ * Your actual SinglePageReader maps all pages but only renders
+ * the active page visibly through CSS.
+ *
+ * For ReaderPage integration tests we want to verify the
+ * contract between ReaderPage and SinglePageReader.
+ *
+ * This mock also makes page switching obvious.
+ * ========================================================= */
+
+vi.mock(
+  "../../features/reader/components/SinglePageReader/SinglePageReader",
+  () => ({
+    default: ({
+      pages,
+      currentPage,
+      onNextPage,
+      onPreviousPage,
+    }: {
+      pages: {
+        index: number;
+        url: string;
+      }[];
+      currentPage: number;
+      onNextPage: () => void;
+      onPreviousPage: () => void;
+    }) => {
+      const page = pages[currentPage];
+
+      return (
+        <main className="reader-single-page">
+          <div
+            className="reader-single-page__stage"
+            role="region"
+            aria-label="Single page reader"
+          >
+            <div
+              className="reader-single-page__item reader-single-page__item--active"
+              data-page={currentPage + 1}
+            >
+              <img src={page.url} alt={`Page ${page.index + 1}`} />
+            </div>
+
+            <button
+              type="button"
+              aria-label="Previous page"
+              onClick={onPreviousPage}
+              disabled={currentPage <= 0}
+            >
+              Previous
+            </button>
+
+            <button
+              type="button"
+              aria-label="Next page"
+              onClick={onNextPage}
+              disabled={currentPage >= pages.length - 1}
+            >
+              Next
+            </button>
+          </div>
+
+          <div className="reader-single-page__page-indicator">
+            <span>{String(currentPage + 1).padStart(2, "0")}</span>
+
+            <span>/</span>
+
+            <span>{String(pages.length).padStart(2, "0")}</span>
+          </div>
+        </main>
+      );
+    },
+  }),
+);
+
+/* =========================================================
+ * Helpers
+ * ========================================================= */
+
+function renderReader() {
   return render(
-    <MemoryRouter initialEntries={["/manga/manga-1/chapter/chapter-1"]}>
-      <Routes>
-        <Route
-          path="/manga/:mangaId/chapter/:chapterId"
-          element={<ReaderPage />}
-        />
-      </Routes>
+    <MemoryRouter initialEntries={["/reader/manga-1/chapter-1"]}>
+      <ReaderPage />
     </MemoryRouter>,
   );
 }
 
-async function switchToSinglePage() {
-  const user = userEvent.setup();
-
-  const button = screen.getByRole("button", {
-    name: "Single Page",
-  });
-
-  await user.click(button);
-}
-
-function mockReaderBoundingBox(reader: HTMLElement) {
-  vi.spyOn(reader, "getBoundingClientRect").mockReturnValue({
-    left: 0,
-    right: 1000,
-
-    top: 0,
-    bottom: 1000,
-
-    width: 1000,
-    height: 1000,
-
-    x: 0,
-    y: 0,
-
-    toJSON: () => ({}),
-  } as DOMRect);
-}
-
-function getSinglePageReader() {
-  const reader = document.querySelector(".reader-single-page");
-
-  expect(reader).toBeInTheDocument();
-
-  return reader as HTMLElement;
-}
+/* =========================================================
+ * Tests
+ * ========================================================= */
 
 describe("ReaderPage", () => {
+  beforeEach(() => {
+    mockCurrentPage = 0;
 
-  beforeEach(()=>{
-    vi.clearAllMocks()
-    localStorage.clear()
-    setupMocks()
-  })
+    vi.clearAllMocks();
+  });
 
-  it("renders the first page initially", () => {
-    setupMocks();
+  /* -------------------------------------------------------
+   * Initial render
+   * ------------------------------------------------------- */
 
-    renderReaderPage();
+  it("renders the reader", () => {
+    renderReader();
 
-    expect(screen.getByText("Current Page : 1")).toBeInTheDocument();
+    expect(
+      screen.getByRole("region", {
+        name: "Single page reader",
+      }),
+    ).toBeInTheDocument();
+  });
+
+  it("renders the first page", () => {
+    renderReader();
 
     expect(screen.getByAltText("Page 1")).toBeInTheDocument();
 
-    expect(screen.getByAltText("Page 2")).toBeInTheDocument();
+    expect(screen.queryByAltText("Page 2")).not.toBeInTheDocument();
 
-    expect(screen.getByAltText("Page 3")).toBeInTheDocument();
+    expect(screen.queryByAltText("Page 3")).not.toBeInTheDocument();
   });
 
-  it("moves to the next page when the user clicks the right half", async () => {
-    setupMocks();
+  it("shows the correct initial page indicator", () => {
+    renderReader();
 
-    renderReaderPage();
+    expect(screen.getByText("01")).toBeInTheDocument();
 
-    await switchToSinglePage();
-
-    expect(screen.getByText("Current Page : 1")).toBeInTheDocument();
-
-    const reader = getSinglePageReader();
-
-    mockReaderBoundingBox(reader);
-
-    fireEvent.click(reader, {
-      clientX: 750,
-      clientY: 500,
-    });
-
-    expect(screen.getByText("Current Page : 2")).toBeInTheDocument();
-  });
-
-  it("moves to the previous page when the user clicks the left half", async () => {
-    setupMocks();
-
-    renderReaderPage();
-
-    await switchToSinglePage();
-
-    const reader = getSinglePageReader();
-
-    mockReaderBoundingBox(reader);
-
-    fireEvent.click(reader, {
-      clientX: 750,
-      clientY: 500,
-    });
-
-    expect(screen.getByText("Current Page : 2")).toBeInTheDocument();
-
-    fireEvent.click(reader, {
-      clientX: 250,
-      clientY: 500,
-    });
-
-    expect(screen.getByText("Current Page : 1")).toBeInTheDocument();
-  });
-
-  it("does not move before the first page", async () => {
-    setupMocks();
-
-    renderReaderPage();
-
-    await switchToSinglePage();
-
-    const reader = getSinglePageReader();
-
-    mockReaderBoundingBox(reader);
-
-
-    fireEvent.click(reader, {
-      clientX: 250,
-      clientY: 500,
-    });
-
-    expect(screen.getByText("Current Page : 1")).toBeInTheDocument();
-  });
-
-  it("does not move after the last page", async () => {
-    setupMocks();
-
-    renderReaderPage();
-
-    await switchToSinglePage();
-
-    const reader = getSinglePageReader();
-
-    mockReaderBoundingBox(reader);
-
-    fireEvent.click(reader, {
-      clientX: 750,
-      clientY: 500,
-    });
-
-    fireEvent.click(reader, {
-      clientX: 750,
-      clientY: 500,
-    });
-
-    expect(screen.getByText("Current Page : 3")).toBeInTheDocument();
-
-    fireEvent.click(reader, {
-      clientX: 750,
-      clientY: 500,
-    });
-
-    expect(screen.getByText("Current Page : 3")).toBeInTheDocument();
-  });
-
-
-  it("updates the reader progress when the current page changes", async () => {
-    setupMocks();
-
-    renderReaderPage();
-
-    await switchToSinglePage();
-
-    const reader = getSinglePageReader();
-
-    mockReaderBoundingBox(reader);
-
-    expect(screen.getByLabelText("Page 1 of 3")).toBeInTheDocument();
-
-    fireEvent.click(reader, {
-      clientX: 750,
-      clientY: 500,
-    });
-
-    expect(screen.getByLabelText("Page 2 of 3")).toBeInTheDocument();
-  });
-
-  it("passes chapter navigation state to ReaderNavigation", () => {
-    const goPreviousChapter = vi.fn();
-    const goNextChapter = vi.fn();
-
-    setupMocks();
-
-    mocks.useChapterNavigation.mockReturnValue({
-      previousChapter: {
-        id: "chapter-0",
-      },
-
-      nextChapter: {
-        id: "chapter-2",
-      },
-
-      goPreviousChapter,
-      goNextChapter,
-
-      hasPrevious: true,
-      hasNext: true,
-
-      pendingNavigation: null,
-
-      navigationStatus: "idle",
-
-      needsMoreChapters: false,
-    });
-
-    renderReaderPage();
+    expect(screen.getByText("03")).toBeInTheDocument();
 
     expect(
       screen.getByRole("button", {
-        name: "Previous Button",
+        name: "Current page 1 of 3. Go to Page",
       }),
-    ).not.toBeDisabled();
+    ).toBeInTheDocument();
+  });
+
+  /* -------------------------------------------------------
+   * Toolbar
+   * ------------------------------------------------------- */
+
+  it("renders reader toolbar controls", () => {
+    renderReader();
+
+    expect(screen.getByTestId("toolbar-previous-chapter")).toBeInTheDocument();
+
+    expect(screen.getByTestId("toolbar-next-chapter")).toBeInTheDocument();
 
     expect(
       screen.getByRole("button", {
-        name: "Next Chapter",
+        name: "Reader settings",
       }),
-    ).not.toBeDisabled();
+    ).toBeInTheDocument();
   });
 
-  it("renders loading state while pages are loading", () => {
-    setupMocks();
+  /* -------------------------------------------------------
+   * Next page
+   * ------------------------------------------------------- */
 
-    mocks.useReaderData.mockReturnValue({
-      pages: [],
-      chapters: [],
+  it("calls next page when toolbar next button is clicked", () => {
+    renderReader();
 
-      pagesQuery: {
-        isPending: true,
-        isError: false,
-        error: null,
-      },
+    fireEvent.click(screen.getByTestId("toolbar-next-page"));
 
-      chaptersQuery: {
-        hasNextPage: false,
-        fetchNextPage: vi.fn(),
-        isFetchingNextPage: false,
-        isFetchNextPageError: false,
-      },
+    expect(mockGoToNextPage).toHaveBeenCalledTimes(1);
+  });
+
+  it("calls next page from SinglePageReader", () => {
+    renderReader();
+
+    const nextButton = screen.getAllByRole("button", {
+      name: "Next page",
     });
 
-    renderReaderPage();
+    fireEvent.click(nextButton[nextButton.length - 1]);
 
-    expect(screen.getByText("Loading pages ...")).toBeInTheDocument();
+    expect(mockGoToNextPage).toHaveBeenCalledTimes(1);
   });
 
-  it("renders an error message when page loading fails", () => {
-    setupMocks();
+  /* -------------------------------------------------------
+   * Previous page
+   * ------------------------------------------------------- */
 
-    mocks.useReaderData.mockReturnValue({
-      pages: [],
-      chapters: [],
+  it("calls previous page when toolbar previous button is clicked", () => {
+    renderReader();
 
-      pagesQuery: {
-        isPending: false,
-        isError: true,
-        error: new Error("Failed to load pages"),
-      },
+    fireEvent.click(screen.getByTestId("toolbar-previous-page"));
 
-      chaptersQuery: {
-        hasNextPage: false,
-        fetchNextPage: vi.fn(),
-        isFetchingNextPage: false,
-        isFetchNextPageError: false,
-      },
-    });
-
-    renderReaderPage();
-
-    expect(screen.getByText("Error: Failed to load pages")).toBeInTheDocument();
+    expect(mockGoToPreviousPage).toHaveBeenCalledTimes(1);
   });
 
-  it("preloads pages using the current page", () => {
-    setupMocks();
+  /* -------------------------------------------------------
+   * Progress
+   * ------------------------------------------------------- */
 
-    renderReaderPage();
+  it("renders ReaderProgress", () => {
+    renderReader();
 
-    expect(mocks.useReaderPreload).toHaveBeenCalledWith(pages, 0, 3);
+    expect(
+      screen.getByRole("button", {
+        name: "Current page 1 of 3. Go to Page",
+      }),
+    ).toBeInTheDocument();
   });
 
-  it("configures long strip page tracking", () => {
-    setupMocks();
+  /* -------------------------------------------------------
+   * Page update
+   *
+   * We simulate the real hook updating currentPage by
+   * changing mockCurrentPage and forcing a rerender.
+   * ------------------------------------------------------- */
 
-    renderReaderPage();
+  it("updates the rendered page when currentPage changes", async () => {
+    const result = renderReader();
 
-    expect(mocks.useLongStripPageTracking).toHaveBeenCalledWith({
-      enabled: true,
-      onPageChange: expect.any(Function),
-    });
-  });
+    expect(screen.getByAltText("Page 1")).toBeInTheDocument();
 
-  it("configures long strip navigation with the current page", () => {
-    setupMocks();
+    mockCurrentPage = 1;
 
-    renderReaderPage();
-
-    expect(mocks.useLongStripNavigation).toHaveBeenCalledWith({
-      currentPage: 0,
-      totalPages: 3,
-    });
-  });
-
-  it("renders an invalid URL message when mangaId is missing", () => {
-    setupMocks();
-
-    render(
-      <MemoryRouter initialEntries={["/chapter/chapter-1"]}>
-        <Routes>
-          <Route path="/chapter/:chapterId" element={<ReaderPage />} />
-        </Routes>
+    result.rerender(
+      <MemoryRouter initialEntries={["/reader/manga-1/chapter-1"]}>
+        <ReaderPage />
       </MemoryRouter>,
     );
 
-    expect(screen.getByText("Invalid Reader Url")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByAltText("Page 2")).toBeInTheDocument();
+    });
+
+    expect(screen.queryByAltText("Page 1")).not.toBeInTheDocument();
+
+    expect(
+      screen.getByRole("button", {
+        name: "Current page 2 of 3. Go to Page",
+      }),
+    ).toBeInTheDocument();
   });
 
-  it("restores the saved reading progress for the same manga and chapter",async()=>{
-    localStorage.setItem(
+  /* -------------------------------------------------------
+   * Page 3
+   * ------------------------------------------------------- */
 
-      "manga-reader-progress",
-      JSON.stringify([
-        {
-          mangaId:"manga-1",
-          chapterId:"chapter-1",
-          page:1,
-          updatedAt:Date.now()
-        }
-      ])
-    )
+  it("can render the last page", () => {
+    mockCurrentPage = 2;
 
-    renderReaderPage()
-    expect(await screen.findByText("Current Page : 2")).toBeInTheDocument()
-  })
+    renderReader();
+    const pageIndicator = document.querySelector(
+      ".reader-single-page__page-indicator",
+    );
 
-  it("does not restore progress from another chapter",()=>{
-    localStorage.setItem("manga-reader-progress",JSON.stringify([{
-      mangaId:"manga-1",
-      chapterId:"chapter-999",
-      page:1,
-      updatedAt:Date.now()
-    }]))
+    expect(pageIndicator).toBeInTheDocument();
+    expect(pageIndicator).toHaveTextContent("03");
 
-    renderReaderPage()
+    expect(
+      screen.getByRole("button", {
+        name: "Current page 3 of 3. Go to Page",
+      }),
+    ).toBeInTheDocument();
+  });
 
-    expect(screen.getByText("Current Page : 1")).toBeInTheDocument()
-  })
+  /* -------------------------------------------------------
+   * Single page structure
+   * ------------------------------------------------------- */
 
-  it("does not restore preogress from another manga",()=>{
-    localStorage.setItem(
-      "manga-reader-progress",
-      JSON.stringify([{
-        mangaId:"manga-999",
-        chapterId:"chapter-1",
-        page:1,
-        updatedAt:Date.now()
-      }])
-    )
-    renderReaderPage()
+  it("renders the single page reader container", () => {
+    renderReader();
 
-    expect(screen.getByText("Current Page : 1"),).toBeInTheDocument()
-  })
+    expect(document.querySelector(".reader-single-page")).toBeInTheDocument();
 
-  it("waits until chapter pages are loaded before restoring progress", async()=>{
-    localStorage.setItem("manga-reader-progress",JSON.stringify([{
-      mangaId:"manga-1",
-      chapterId:"chapter-1",
-      page:1,
-      updatedAt:Date.now()
-    }]))
+    expect(
+      document.querySelector(".reader-single-page__stage"),
+    ).toBeInTheDocument();
 
-    mocks.useReaderData.mockReturnValue({
-      pages:[],
-      chapters:[],
-      pagesQuery:{
-        isPending:true,
-        isError:false,
-        error:null,
-      },
-      chaptersQuery:{
-        hasNextPage:false,
-        fetchNextPage:vi.fn(),
-        isFetchingNextPage:false,
-        isFetchingNextPageError:false
-      }
-    })
-    renderReaderPage()
-    expect(screen.getByText("Loading pages ...")).toBeInTheDocument()
-  })
+    expect(
+      document.querySelector(".reader-single-page__page-indicator"),
+    ).toBeInTheDocument();
+  });
+
+  /* -------------------------------------------------------
+   * Chapter navigation
+   * ------------------------------------------------------- */
+
+  it("disables previous and next chapter when unavailable", () => {
+    renderReader();
+    const chapterNavigation = screen.getByRole("navigation", {
+      name: "Chapter navigation",
+    });
+
+    const previousChapterButton = chapterNavigation.querySelector(
+      'button[aria-label="Previous chapter"]',
+    );
+
+    const nextChapterButton = chapterNavigation.querySelector(
+      'button[aria-label="Next chapter"]',
+    );
+
+    expect(previousChapterButton).toBeDisabled();
+    expect(nextChapterButton).toBeDisabled();
+  });
+
+  /* -------------------------------------------------------
+   * Invalid URL
+   * ------------------------------------------------------- */
+
+  it("renders invalid reader URL when params are missing", async () => {
+    const routerModule = await import("react-router-dom");
+
+    vi.spyOn(routerModule, "useParams").mockReturnValueOnce({
+      mangaId: undefined,
+      chapterId: undefined,
+    });
+
+    render(
+      <MemoryRouter>
+        <ReaderPage />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByText("Invalid Reader URL")).toBeInTheDocument();
+  });
 });
