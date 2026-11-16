@@ -2,214 +2,285 @@ import { renderHook } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { useKeyboardNavigation } from "../../features/reader/hooks/useKeyboardNavigation";
 
-describe("useKeyboardNavigation",()=>{
-    it("calls next when Arrow  right is pressed",()=>{
-        const next = vi.fn();
-        const previous = vi.fn();
+describe("useKeyboardNavigation", () => {
+  it("calls next when Arrow  right is pressed", () => {
+    const next = vi.fn();
+    const previous = vi.fn();
 
-        renderHook(()=> useKeyboardNavigation({controls:{next,previous}}))
-    
-        window.dispatchEvent(new KeyboardEvent("keydown",{
-            key:"ArrowRight"
-        }))
+    renderHook(() => useKeyboardNavigation({ controls: { next, previous } }));
 
-        expect(next).toHaveBeenCalledTimes(1)
-        expect(previous).not.toHaveBeenCalled()
-    })
+    window.dispatchEvent(
+      new KeyboardEvent("keydown", {
+        key: "ArrowRight",
+      }),
+    );
 
-    it("calls next when  arrowDown is pressed",()=>{
-        const next = vi.fn()
-        const previous = vi.fn()
+    expect(next).toHaveBeenCalledTimes(1);
+    expect(previous).not.toHaveBeenCalled();
+  });
 
-        renderHook(()=>useKeyboardNavigation({
-            controls:{
-                next,
-                previous,
-            }
-        }))
+  it("calls next when  arrowDown is pressed", () => {
+    const next = vi.fn();
+    const previous = vi.fn();
 
-        window.dispatchEvent(new KeyboardEvent("keydown",{
-            key:"ArrowDown"
-        }))
+    renderHook(() =>
+      useKeyboardNavigation({
+        controls: {
+          next,
+          previous,
+        },
+      }),
+    );
 
-        expect(next).toHaveBeenCalledTimes(1)
-        expect(previous).not.toHaveBeenCalled()
-    })
+    window.dispatchEvent(
+      new KeyboardEvent("keydown", {
+        key: "ArrowDown",
+      }),
+    );
 
-    it('calls previous when ArrowLeft is pressed',()=>{
-        const next = vi.fn();
-        const previous = vi.fn()
+    expect(next).toHaveBeenCalledTimes(1);
+    expect(previous).not.toHaveBeenCalled();
+  });
 
-        renderHook(()=> useKeyboardNavigation({
-            controls:{next,previous}
-        }))
+  it("calls previous when ArrowLeft is pressed", () => {
+    const next = vi.fn();
+    const previous = vi.fn();
 
-        window.dispatchEvent(new KeyboardEvent("keydown",{key:"ArrowLeft"}))
-    
-        expect(previous).toHaveBeenCalledTimes(1)
-        expect(next).not.toHaveBeenCalled()
-    })
+    renderHook(() =>
+      useKeyboardNavigation({
+        controls: { next, previous },
+      }),
+    );
 
-    it("calls previous when  arrowUp is pressed", ()=>{
-        const next = vi.fn()
+    window.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowLeft" }));
 
-        const previous = vi.fn()
+    expect(previous).toHaveBeenCalledTimes(1);
+    expect(next).not.toHaveBeenCalled();
+  });
 
-        renderHook(()=>{
-            useKeyboardNavigation({
-                controls:{
-                    next,previous
-                }
-            })
-        })
+  it("calls previous when  arrowUp is pressed", () => {
+    const next = vi.fn();
 
-        window.dispatchEvent(new KeyboardEvent("keydown",{
-            key:"ArrowUp"
-        }))
+    const previous = vi.fn();
 
-        expect(previous).toHaveBeenCalledTimes(1)
-        expect(next).not.toHaveBeenCalled()
-    })
+    renderHook(() => {
+      useKeyboardNavigation({
+        controls: {
+          next,
+          previous,
+        },
+      });
+    });
 
-    it("does not respond when enabled is false", ()=>{
-        const next = vi.fn();
-        const previous = vi.fn()
+    window.dispatchEvent(
+      new KeyboardEvent("keydown", {
+        key: "ArrowUp",
+      }),
+    );
 
-        renderHook(()=>useKeyboardNavigation({controls:{next,previous},enabled:false}))
+    expect(previous).toHaveBeenCalledTimes(1);
+    expect(next).not.toHaveBeenCalled();
+  });
 
-        window.dispatchEvent(new KeyboardEvent("keydown",{
-            key:"Arrow Right",
-        }))
+  it("does not respond when enabled is false", () => {
+    const next = vi.fn();
+    const previous = vi.fn();
 
-        window.dispatchEvent(new KeyboardEvent("keydown",{
-            key:"ArrowLeft"
-        }))
+    renderHook(() =>
+      useKeyboardNavigation({ controls: { next, previous }, enabled: false }),
+    );
 
-        expect(next).not.toHaveBeenCalled()
-        expect(previous).not.toHaveBeenCalled()
-    })
+    window.dispatchEvent(
+      new KeyboardEvent("keydown", {
+        key: "Arrow Right",
+      }),
+    );
 
-    it("does not respond when the event target is an input",()=>{
-        const next = vi.fn()
-        const previous = vi.fn()
+    window.dispatchEvent(
+      new KeyboardEvent("keydown", {
+        key: "ArrowLeft",
+      }),
+    );
 
-        renderHook(()=>{
-            useKeyboardNavigation({controls:{next,previous}})
-        })
+    expect(next).not.toHaveBeenCalled();
+    expect(previous).not.toHaveBeenCalled();
+  });
 
-        const input  = document.createElement("input")
-        document.body.appendChild(input)
+  it("does not respond when the event target is an input", () => {
+    const next = vi.fn();
+    const previous = vi.fn();
 
-        input.dispatchEvent(new KeyboardEvent("keydown",{
-            key:"ArrowRight",bubbles:true,
-        }))
+    renderHook(() => {
+      useKeyboardNavigation({ controls: { next, previous } });
+    });
 
-        expect(next).not.toHaveBeenCalled()
-        expect(previous).not.toHaveBeenCalled()
-        input.remove()
-    })
+    const input = document.createElement("input");
+    document.body.appendChild(input);
 
-    it("does not respond when the event target is a textarea",()=>{
-        const next = vi.fn()
-        const previous = vi.fn()
+    input.dispatchEvent(
+      new KeyboardEvent("keydown", {
+        key: "ArrowRight",
+        bubbles: true,
+      }),
+    );
 
-        renderHook(()=>{
-            useKeyboardNavigation({
-                controls:{
-                    next,previous
+    expect(next).not.toHaveBeenCalled();
+    expect(previous).not.toHaveBeenCalled();
+    input.remove();
+  });
 
-                }
-            })
-        })
+  it("does not respond when the event target is a textarea", () => {
+    const next = vi.fn();
+    const previous = vi.fn();
 
-        const textarea = document.createElement("textarea")
-        document.body.appendChild(textarea)
+    renderHook(() => {
+      useKeyboardNavigation({
+        controls: {
+          next,
+          previous,
+        },
+      });
+    });
 
-        textarea.dispatchEvent(
-            new KeyboardEvent("keydown",{
-                key:"ArrowRight",
-                bubbles:true
-            })
-        )
+    const textarea = document.createElement("textarea");
+    document.body.appendChild(textarea);
 
-        expect(next).not.toHaveBeenCalled();
-        expect(previous).not.toHaveBeenCalled()
+    textarea.dispatchEvent(
+      new KeyboardEvent("keydown", {
+        key: "ArrowRight",
+        bubbles: true,
+      }),
+    );
 
-        textarea.remove()
-    })
+    expect(next).not.toHaveBeenCalled();
+    expect(previous).not.toHaveBeenCalled();
 
-    it("does not respond when the  event target is a select",()=>{
-         const next = vi.fn()
-        const previous = vi.fn()
+    textarea.remove();
+  });
 
-        renderHook(()=>{
-            useKeyboardNavigation({
-                controls:{
-                    next,previous
+  it("does not respond when the  event target is a select", () => {
+    const next = vi.fn();
+    const previous = vi.fn();
 
-                }
-            })
-        })
-        
-        const select = document.createElement("select")
-        document.body.appendChild(select)
+    renderHook(() => {
+      useKeyboardNavigation({
+        controls: {
+          next,
+          previous,
+        },
+      });
+    });
 
-        select.dispatchEvent(new KeyboardEvent("keydown",{key:"ArrowRight",bubbles:true}))
-        
-        expect(next).not.toHaveBeenCalled();
-        expect(previous).not.toHaveBeenCalled()
-        
-        select.remove()
-    })
+    const select = document.createElement("select");
+    document.body.appendChild(select);
 
-    it("does not respond when the event target is content Editable",()=>{
-         const next = vi.fn()
-        const previous = vi.fn()
+    select.dispatchEvent(
+      new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true }),
+    );
 
-        renderHook(()=>{
-            useKeyboardNavigation({
-                controls:{
-                    next,previous
+    expect(next).not.toHaveBeenCalled();
+    expect(previous).not.toHaveBeenCalled();
 
-                }
-            })
-        })
+    select.remove();
+  });
 
-        const editor = document.createElement("div")
+  it("does not respond when the event target is content Editable", () => {
+    const next = vi.fn();
+    const previous = vi.fn();
 
-        Object.defineProperty(editor,"isContentEditable",{
-            configurable:true,
-            value:true
-        })
+    renderHook(() => {
+      useKeyboardNavigation({
+        controls: {
+          next,
+          previous,
+        },
+      });
+    });
 
-        document.body.appendChild(editor)
+    const editor = document.createElement("div");
 
-        editor.dispatchEvent(new KeyboardEvent("keydown",{
-            key:"ArrowRight",
-            bubbles:true
-        }))
+    Object.defineProperty(editor, "isContentEditable", {
+      configurable: true,
+      value: true,
+    });
 
-        expect(next).not.toHaveBeenCalled();
-        expect(previous).not.toHaveBeenCalled();
+    document.body.appendChild(editor);
 
-        editor.remove()
-    })
+    editor.dispatchEvent(
+      new KeyboardEvent("keydown", {
+        key: "ArrowRight",
+        bubbles: true,
+      }),
+    );
 
-    it("removes the keyboard listener when the hook unmounts",()=>{
-        const next=vi.fn();
-        const previous=vi.fn()
+    expect(next).not.toHaveBeenCalled();
+    expect(previous).not.toHaveBeenCalled();
 
-        const {unmount} = renderHook(()=>useKeyboardNavigation({
-            controls:{
-                next,previous
-            }
-        }))
+    editor.remove();
+  });
 
-        unmount();
+  it("removes the keyboard listener when the hook unmounts", () => {
+    const next = vi.fn();
+    const previous = vi.fn();
 
-        window.dispatchEvent(new KeyboardEvent("keydown",{key:"ArrowRight"}))
+    const { unmount } = renderHook(() =>
+      useKeyboardNavigation({
+        controls: {
+          next,
+          previous,
+        },
+      }),
+    );
 
-        expect(next).not.toHaveBeenCalled()
-        expect(previous).not.toHaveBeenCalled()
-    })
-})
+    unmount();
+
+    window.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight" }));
+
+    expect(next).not.toHaveBeenCalled();
+    expect(previous).not.toHaveBeenCalled();
+  });
+
+  it("does not navigate on ArrowDown/ArrowUp when verticleArrowsNavigate is false", () => {
+    const next = vi.fn();
+    const previous = vi.fn();
+    renderHook(() => {
+      useKeyboardNavigation({
+        controls: { next, previous },
+        verticalArrowsNavigate: false,
+      });
+    });
+
+    window.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowDown" }));
+    window.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowUp" }));
+
+    expect(next).not.toHaveBeenCalled();
+    expect(previous).not.toHaveBeenCalled();
+  });
+  it("still navigates on ArrowRight when verticalArrowsNavigate is false", () => {
+    const next = vi.fn();
+    const previous = vi.fn();
+
+    renderHook(() =>
+      useKeyboardNavigation({
+        controls: { next, previous },
+        verticalArrowsNavigate: false,
+      }),
+    );
+
+    window.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight" }));
+
+    expect(next).toHaveBeenCalledTimes(1);
+  });
+  it("ignores shortcuts with modifier keys such as Alt+ArrowLeft", () => {
+    const next = vi.fn();
+    const previous = vi.fn();
+
+    renderHook(() => useKeyboardNavigation({ controls: { next, previous } }));
+
+    window.dispatchEvent(
+      new KeyboardEvent("keydown", { key: "ArrowLeft", altKey: true }),
+    );
+
+    expect(previous).not.toHaveBeenCalled();
+  });
+});

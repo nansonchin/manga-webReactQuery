@@ -50,205 +50,245 @@ describe("useChapterNavigation", () => {
     },
   ];
 
-  it("navigates directly when previous chapter is alread loaded",()=>{
+  it("navigates directly when previous chapter is alread loaded", () => {
     const fetchNextPage = vi.fn();
 
-    const {result}=renderHook(()=>useChapterNavigation({chapters,
-        mangaId:"manga-1",currentChapterId:"8",
-        hasMoreChapters:true,fetchNextPage,isLoadingMoreChapters:false,isFetchNextPageError:false}))
-  
-    act(()=>{
-        result.current.goPreviousChapter()
-    })
-
-    expect(navigateMock).toHaveBeenCalledWith("/manga/manga-1/chapter/7")
-})
-
-it("fetches the next chapter page when previous chapter is not loaded",()=>{
-    const fetchNextPage = vi.fn().mockResolvedValue({})
-    const loadedChapters =[
-        chapters[0],
-        chapters[1],
-        chapters[2]
-    ]
-
-    const {result}= renderHook(()=>
-        useChapterNavigation({
-            chapters:loadedChapters, mangaId:"manga-1",currentChapterId:"8",
-            hasMoreChapters:true,fetchNextPage,isLoadingMoreChapters:false,isFetchNextPageError:false})
-    )
-
-     act(()=>{
-        result.current.goPreviousChapter()
-    })
-
-    expect(fetchNextPage).toHaveBeenCalledTimes(1)
-    expect(navigateMock).not.toHaveBeenCalled()
-})
-
-it("navigates after fetching reveals the previous chapter", async()=>{
-    const fetchNextPage = vi.fn().mockResolvedValue({})
-
-    const loadedChapters=[
-        chapters[0],
-        chapters[1],
-        chapters[2],
-
-    ]
-
-    const {result,rerender}=renderHook(({chapters})=>useChapterNavigation({
+    const { result } = renderHook(() =>
+      useChapterNavigation({
         chapters,
-        mangaId:"manga-1",
-        currentChapterId:"8",
-        hasMoreChapters:true,
+        mangaId: "manga-1",
+        currentChapterId: "8",
+        hasMoreChapters: true,
         fetchNextPage,
-        isLoadingMoreChapters:false,
-        isFetchNextPageError:false}),
-        {initialProps:{chapters:loadedChapters}})
+        isLoadingMoreChapters: false,
+        isFetchNextPageError: false,
+      }),
+    );
 
-    act(()=>{
-        result.current.goPreviousChapter()
-    })
+    act(() => {
+      result.current.goPreviousChapter();
+    });
 
-    expect(fetchNextPage).toHaveBeenCalledTimes(1)
+    expect(navigateMock).toHaveBeenCalledWith("/manga/manga-1/chapter/7");
+  });
+
+  it("fetches the next chapter page when previous chapter is not loaded", () => {
+    const fetchNextPage = vi.fn().mockResolvedValue({});
+    const loadedChapters = [chapters[0], chapters[1], chapters[2]];
+
+    const { result } = renderHook(() =>
+      useChapterNavigation({
+        chapters: loadedChapters,
+        mangaId: "manga-1",
+        currentChapterId: "8",
+        hasMoreChapters: true,
+        fetchNextPage,
+        isLoadingMoreChapters: false,
+        isFetchNextPageError: false,
+      }),
+    );
+
+    act(() => {
+      result.current.goPreviousChapter();
+    });
+
+    expect(fetchNextPage).toHaveBeenCalledTimes(1);
+    expect(navigateMock).not.toHaveBeenCalled();
+  });
+
+  it("navigates after fetching reveals the previous chapter", async () => {
+    const fetchNextPage = vi.fn().mockResolvedValue({});
+
+    const loadedChapters = [chapters[0], chapters[1], chapters[2]];
+
+    const { result, rerender } = renderHook(
+      ({ chapters }) =>
+        useChapterNavigation({
+          chapters,
+          mangaId: "manga-1",
+          currentChapterId: "8",
+          hasMoreChapters: true,
+          fetchNextPage,
+          isLoadingMoreChapters: false,
+          isFetchNextPageError: false,
+        }),
+      { initialProps: { chapters: loadedChapters } },
+    );
+
+    act(() => {
+      result.current.goPreviousChapter();
+    });
+
+    expect(fetchNextPage).toHaveBeenCalledTimes(1);
 
     rerender({
-        chapters:[
-            ...loadedChapters,
-            chapters[3]
-        ]
-    })
+      chapters: [...loadedChapters, chapters[3]],
+    });
 
-    await waitFor(()=>{
-        expect(navigateMock).toHaveBeenCalledWith("/manga/manga-1/chapter/7")
-    })
-})
+    await waitFor(() => {
+      expect(navigateMock).toHaveBeenCalledWith("/manga/manga-1/chapter/7");
+    });
+  });
 
-it("does not fetch whenthere are no more chapters",()=>{
-    const fetchNextPage = vi.fn()
-
-    const loadedChapters=[
-        chapters[0],
-        chapters[1],
-        chapters[2]
-    ]
-
-    const {result}= renderHook(()=>useChapterNavigation({
-        chapters:loadedChapters,
-        mangaId:"manga-1",
-        currentChapterId:"8",
-        hasMoreChapters:false,
-        fetchNextPage,
-        isLoadingMoreChapters:false,
-        isFetchNextPageError:false}))
-
-    act(()=>{
-        result.current.goPreviousChapter()
-    })
-
-    expect(fetchNextPage).not.toHaveBeenCalled()
-    expect(navigateMock).not.toHaveBeenCalled()
-
-})
-
-it("does not fetch again while already loading",()=>{
-    const fetchNextPage=vi.fn()
-
-    const loadedChapters=[
-        chapters[0],
-        chapters[1],
-        chapters[2]
-    ]
-
-    const {result}= renderHook(()=> useChapterNavigation(
-        {chapters:loadedChapters,
-        mangaId:"manga-1",
-        currentChapterId:"8",
-        hasMoreChapters:true,
-        fetchNextPage,
-        isLoadingMoreChapters:true,
-        isFetchNextPageError:false
-    }))
-
-    act(()=>{
-        result.current.goPreviousChapter()
-    })
-
-    expect(fetchNextPage).not.toHaveBeenCalled()
-})
-
-it("reports error when fetching the next chapter page fails",()=>{
-    const fetchNextPage=vi.fn()
-
-    const loadedChapters=[
-        chapters[0],
-        chapters[1],
-        chapters[2]
-    ]
-
-    const {result} = renderHook(()=>useChapterNavigation({
-        chapters:loadedChapters,
-        mangaId:"manga-1",
-        currentChapterId:"8",
-        hasMoreChapters:true,
-        fetchNextPage,
-        isLoadingMoreChapters:false,
-        isFetchNextPageError:true
-    }))
-
-    act(()=>{
-        result.current.goPreviousChapter()
-    })
-
-    expect(result.current.navigationStatus).toBe("error")
-})
-
-it("navigates to next chapter when  it is already loaded",()=>{
+  it("does not fetch whenthere are no more chapters", () => {
     const fetchNextPage = vi.fn();
 
-    const {result} = renderHook(()=>
-        useChapterNavigation({
-            chapters:chapters,
-            mangaId:"manga-1",
-            currentChapterId:"8",
-            hasMoreChapters:true,
-            fetchNextPage,
-            isLoadingMoreChapters:false,
-            isFetchNextPageError:false
-        })
-    )
+    const loadedChapters = [chapters[0], chapters[1], chapters[2]];
 
-    act(()=>{
-        result.current.goNextChapter()
-    })
+    const { result } = renderHook(() =>
+      useChapterNavigation({
+        chapters: loadedChapters,
+        mangaId: "manga-1",
+        currentChapterId: "8",
+        hasMoreChapters: false,
+        fetchNextPage,
+        isLoadingMoreChapters: false,
+        isFetchNextPageError: false,
+      }),
+    );
 
-    expect(navigateMock).toHaveBeenCalledWith("/manga/manga-1/chapter/9")
+    act(() => {
+      result.current.goPreviousChapter();
+    });
 
-    expect(fetchNextPage).not.toHaveBeenCalled()
-})
+    expect(fetchNextPage).not.toHaveBeenCalled();
+    expect(navigateMock).not.toHaveBeenCalled();
+  });
 
-it("does not navigate when there is no  next chapter  ",()=>{
-    const fetchNextPage = vi.fn()
+  it("does not fetch again while already loading", () => {
+    const fetchNextPage = vi.fn();
+
+    const loadedChapters = [chapters[0], chapters[1], chapters[2]];
+
+    const { result } = renderHook(() =>
+      useChapterNavigation({
+        chapters: loadedChapters,
+        mangaId: "manga-1",
+        currentChapterId: "8",
+        hasMoreChapters: true,
+        fetchNextPage,
+        isLoadingMoreChapters: true,
+        isFetchNextPageError: false,
+      }),
+    );
+
+    act(() => {
+      result.current.goPreviousChapter();
+    });
+
+    expect(fetchNextPage).not.toHaveBeenCalled();
+  });
+
+  it("reports error when fetching the next chapter page fails", () => {
+    const fetchNextPage = vi.fn();
+
+    const loadedChapters = [chapters[0], chapters[1], chapters[2]];
+
+    const { result } = renderHook(() =>
+      useChapterNavigation({
+        chapters: loadedChapters,
+        mangaId: "manga-1",
+        currentChapterId: "8",
+        hasMoreChapters: true,
+        fetchNextPage,
+        isLoadingMoreChapters: false,
+        isFetchNextPageError: true,
+      }),
+    );
+
+    act(() => {
+      result.current.goPreviousChapter();
+    });
+
+    expect(result.current.navigationStatus).toBe("error");
+  });
+
+  it("navigates to next chapter when  it is already loaded", () => {
+    const fetchNextPage = vi.fn();
+
+    const { result } = renderHook(() =>
+      useChapterNavigation({
+        chapters: chapters,
+        mangaId: "manga-1",
+        currentChapterId: "8",
+        hasMoreChapters: true,
+        fetchNextPage,
+        isLoadingMoreChapters: false,
+        isFetchNextPageError: false,
+      }),
+    );
+
+    act(() => {
+      result.current.goNextChapter();
+    });
+
+    expect(navigateMock).toHaveBeenCalledWith("/manga/manga-1/chapter/9");
+
+    expect(fetchNextPage).not.toHaveBeenCalled();
+  });
+
+  it("does not navigate when there is no  next chapter  ", () => {
+    const fetchNextPage = vi.fn();
 
     const loadedChapters = [
-        chapters[0], // eg: chapter 10
-        chapters[1] //eg: chapter 9
+      chapters[0], // eg: chapter 10
+      chapters[1], //eg: chapter 9
     ];
 
-    const {result} = renderHook(()=> useChapterNavigation({
-        chapters:loadedChapters,
-        mangaId:"manga-1",
-        currentChapterId:"10",
-        hasMoreChapters:true,
+    const { result } = renderHook(() =>
+      useChapterNavigation({
+        chapters: loadedChapters,
+        mangaId: "manga-1",
+        currentChapterId: "10",
+        hasMoreChapters: true,
         fetchNextPage,
-        isLoadingMoreChapters:false,
-        isFetchNextPageError:false,
-    }))
+        isLoadingMoreChapters: false,
+        isFetchNextPageError: false,
+      }),
+    );
 
-    act(()=>{
-        result.current.goNextChapter()
-    })
+    act(() => {
+      result.current.goNextChapter();
+    });
 
-    expect(navigateMock).not.toHaveBeenCalled()
-})
+    expect(navigateMock).not.toHaveBeenCalled();
+  });
+
+  it("navigates exactly once when going to the nextchapter", () => {
+    const fetchNextPage = vi.fn();
+
+    const { result } = renderHook(() =>
+      useChapterNavigation({
+        chapters,
+        mangaId: "manga-1",
+        currentChapterId: "8",
+        hasMoreChapters: true,
+        fetchNextPage,
+        isLoadingMoreChapters: false,
+        isFetchNextPageError: false,
+      }),
+    );
+    act(() => {
+      result.current.goNextChapter();
+    });
+    expect(navigateMock).toHaveBeenCalledTimes(1);
+    expect(navigateMock).toHaveBeenCalledWith("/manga/manga-1/chapter/9");
+  });
+
+  it("reports hasNext false on the newest chapter even when more chapters can be loaded", () => {
+    const { result } = renderHook(() =>
+      useChapterNavigation({
+        chapters,
+        mangaId: "manga-1",
+        currentChapterId: "10", 
+        hasMoreChapters: true,
+        fetchNextPage: vi.fn(),
+        isLoadingMoreChapters: false,
+        isFetchNextPageError: false,
+      }),
+    );
+
+    expect(result.current.hasNext).toBe(false);
+    expect(result.current.hasPrevious).toBe(true);
+  });
 });

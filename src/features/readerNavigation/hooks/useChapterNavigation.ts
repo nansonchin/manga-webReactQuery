@@ -53,107 +53,36 @@ export function useChapterNavigation({
     [navigate, mangaId],
   );
 
+  const goNextChapter = useCallback(() => {
+    if (!nextChapter) return;
+    navigateToChapter(nextChapter);
+  }, [nextChapter, navigateToChapter]);
+
   const goPreviousChapter = useCallback(() => {
     if (previousChapter) {
       navigateToChapter(previousChapter);
       return;
     }
 
-    if (isLoadingMoreChapters) {
-      return;
-    }
-
-    if (!hasMoreChapters) {
+    if (isLoadingMoreChapters || !hasMoreChapters) {
       return;
     }
 
     setPendingNavigation("previous");
-
-    // try {
-    //   await loadMoreChapters();
-    // } catch (error) {
-    //   console.error("Failed to load previous chapter", error);
-    // setPendingNavigation(null);
-    // }
-    // const newChapters = result.data?.pages.flatMap((page) => page.data ?? []);
-
-    // const newCurrentIndex = newChapters?.findIndex(
-    //   (chapter) => chapter.id === currentChapterId,
-    // );
   }, [previousChapter, isLoadingMoreChapters, hasMoreChapters, navigate]);
 
-  const goNextChapter = useCallback(() => {
-    if (!nextChapter) {
-      return;
-    }
-
-    if (nextChapter) {
-      navigateToChapter(nextChapter);
-    }
-
-    if (isLoadingMoreChapters) {
-      return;
-    }
-
-    if (!hasMoreChapters) {
-      return;
-    }
-
-    setPendingNavigation("next");
-  }, [nextChapter, navigateToChapter]);
-
-  const needsMoreChapters =
-    !!pendingNavigation && !previousChapter && !nextChapter && hasMoreChapters
-
-  // useEffect(() => {
-  //   if (!pendingNavigation) {
-  //     return;
-  //   }
-
-  //   if(pendingNavigation!=="previous"){
-  //     return;
-  //   }
-
-  //   if (isLoadingMoreChapters) {
-  //     return;
-  //   }
-
-  //   if(isFetchNextPageError){
-  //     return;
-  //   }
-
-  //   if (pendingNavigation === "previous" && previousChapter) {
-  //     setPendingNavigation(null);
-  //     navigateToChapter(previousChapter);
-  //     return;
-  //   }
-  //   if (!hasMoreChapters) {
-  //     setPendingNavigation(null);
-  //   }
-  // }, [
-  //   pendingNavigation,
-  //   previousChapter,
-  //   isLoadingMoreChapters,
-  //   hasMoreChapters,
-  //   isFetchNextPageError
-  // ]);
-
   useEffect(() => {
-    if (!pendingNavigation) {
+    if (pendingNavigation !== "previous") {
       return;
     }
 
-    if (isLoadingMoreChapters) {
-      return;
-    }
-    if (isFetchNextPageError) {
+    if (previousChapter) {
+      setPendingNavigation(null);
+      navigateToChapter(previousChapter);
       return;
     }
 
-    const targetChapter =
-      pendingNavigation === "previous" ? previousChapter : nextChapter;
-
-    if (targetChapter) {
+    if (isLoadingMoreChapters || isFetchNextPageError) {
       return;
     }
 
@@ -161,31 +90,17 @@ export function useChapterNavigation({
       setPendingNavigation(null);
       return;
     }
+
     void fetchNextPage();
   }, [
     pendingNavigation,
     previousChapter,
-    nextChapter,
-    hasMoreChapters,
     isLoadingMoreChapters,
     isFetchNextPageError,
+    hasMoreChapters,
     fetchNextPage,
+    navigateToChapter,
   ]);
-
-  useEffect(() => {
-    if (!pendingNavigation) {
-      return;
-    }
-    const targetChapter = pendingNavigation === "previous" ? previousChapter:nextChapter
-
-    if(!targetChapter){
-      return;
-    }
-
-
-    setPendingNavigation(null);
-    navigateToChapter(targetChapter);
-  }, [pendingNavigation, previousChapter]);
 
   let navigationStatus: NavigationStatus = "idle";
 
@@ -203,9 +118,8 @@ export function useChapterNavigation({
     goPreviousChapter,
     goNextChapter,
     hasPrevious: !!previousChapter || hasMoreChapters,
-    hasNext: !!nextChapter || hasMoreChapters,
+    hasNext: !!nextChapter,
     pendingNavigation,
     navigationStatus,
-    needsMoreChapters,
   };
 }

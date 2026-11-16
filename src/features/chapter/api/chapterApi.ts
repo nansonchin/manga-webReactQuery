@@ -1,5 +1,21 @@
+import { appendContentRatings } from "../../../api/contentRating";
 import type { Chapter, ChapterListResponse } from "../types";
 
+type ChapterDto = {
+  id: string;
+  attributes: {
+    chapter: string | null;
+    title: string | null;
+    volume: string | null;
+    translatedLanguage: string;
+    pages: number;
+  };
+};
+
+type ChapterListDto = {
+  data: ChapterDto[];
+  total: number;
+};
 export async function fetchChapterList(
   mangaId: string,
   page: number = 0,
@@ -14,6 +30,12 @@ export async function fetchChapterList(
   params.append("translatedLanguage[]", "en");
   params.append("order[chapter]", "desc");
 
+  appendContentRatings(params);
+
+  params.set("includeExternalUrl", "0");
+  params.set("includeEmptyPages", "0");
+  params.set("includeFuturePublishAt", "0");
+
   const rest = await fetch(
     `https://api.mangadex.org/chapter?${params.toString()}`,
   );
@@ -22,7 +44,7 @@ export async function fetchChapterList(
     throw new Error("failed to fetch chapters");
   }
 
-  const json = await rest.json();
+  const json:ChapterListDto = await rest.json();
 
   return {
     items: json.data.map((item: any) => ({

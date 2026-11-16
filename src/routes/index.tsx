@@ -4,6 +4,7 @@ import MangaPage from "../pages/MangaPage";
 import MangaDetailPage from "../pages/MangaDetailPage";
 import ReaderPage from "../pages/ReaderPage";
 import App from "../App";
+import NotFoundPage from "../pages/NotFoundPage";
 
 const router = createBrowserRouter([
   {
@@ -25,6 +26,10 @@ const router = createBrowserRouter([
       {
         path: "/manga/:mangaId/chapter/:chapterId",
         element: <ReaderPage />,
+      },
+      {
+        path: "*",
+        element: <NotFoundPage />,
       },
     ],
   },

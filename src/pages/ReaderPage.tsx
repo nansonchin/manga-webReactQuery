@@ -157,7 +157,6 @@ function ReaderPageContent({
     });
 
   const {
-    targetPage,
     scrollToNextPage,
     scrollToPreviousPage,
     requestScrollToPage,
@@ -229,6 +228,7 @@ function ReaderPageContent({
 
   useKeyboardNavigation({
     controls,
+    verticalArrowsNavigate: !isLongStrip,
   });
 
   const {
